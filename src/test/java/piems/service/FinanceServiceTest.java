@@ -320,4 +320,49 @@ class FinanceServiceTest {
         assertThat(service.getAccountBalance(source.id())).isEqualTo(Money.of("40.00"));
         assertThat(service.getAccountBalance(dest.id())).isEqualTo(Money.of("110.00"));
     }
+
+    @Test
+    @DisplayName("D-48: TransactionView resolves account and category names across income, expense, and uncategorized")
+    void transactionViewResolvesAccountAndCategoryNamesAcrossOperations() throws Exception {
+        Account bank = service.createBankAccount("Main Bank", Money.of("1000.00"));
+        Account cash = service.createCashAccount("Pocket Cash", Money.of("50.00"));
+        CategoryComponent salary = service.createCategory("Salary", "INCOME", null);
+        CategoryComponent food = service.createCategory("Food", "EXPENSE", null);
+
+        service.recordIncome(bank.id(), salary.id(), Money.of("500.00"), null, "Paycheck");
+        service.recordExpense(cash.id(), food.id(), Money.of("20.00"), null, "Snacks");
+        service.recordExpense(cash.id(), null, Money.of("5.00"), null, "No category");
+
+        List<TransactionView> txs = service.listAllTransactions();
+        TransactionView inc = txs.stream().filter(t -> "Paycheck".equals(t.note())).findFirst().orElseThrow();
+        assertThat(inc.accountName()).isEqualTo("Main Bank");
+        assertThat(inc.categoryName()).isEqualTo("Salary");
+
+        TransactionView exp = txs.stream().filter(t -> "Snacks".equals(t.note())).findFirst().orElseThrow();
+        assertThat(exp.accountName()).isEqualTo("Pocket Cash");
+        assertThat(exp.categoryName()).isEqualTo("Food");
+
+        TransactionView unc = txs.stream().filter(t -> "No category".equals(t.note())).findFirst().orElseThrow();
+        assertThat(unc.accountName()).isEqualTo("Pocket Cash");
+        assertThat(unc.categoryName()).isNull();
+    }
+
+    @Test
+    @DisplayName("D-48: TransactionView resolves names for transfer legs and archived accounts or categories")
+    void transactionViewResolvesNamesForTransfersAndArchivedEntities() throws Exception {
+        Account source = service.createCashAccount("Src", Money.of("200.00"));
+        Account target = service.createCashAccount("Dst", Money.of("50.00"));
+        service.recordTransfer(source.id(), target.id(), Money.of("50.00"), null, "Transfer");
+
+        List<TransactionView> txs = service.listAllTransactions();
+        TransactionView srcLeg = txs.stream().filter(t -> "Src".equals(t.accountName())).findFirst().orElseThrow();
+        TransactionView dstLeg = txs.stream().filter(t -> "Dst".equals(t.accountName())).findFirst().orElseThrow();
+        assertThat(srcLeg.categoryName()).isNull();
+        assertThat(dstLeg.categoryName()).isNull();
+
+        service.archiveAccount(source.id());
+        List<TransactionView> after = service.listAllTransactions();
+        TransactionView archived = after.stream().filter(t -> t.id().equals(srcLeg.id())).findFirst().orElseThrow();
+        assertThat(archived.accountName()).isEqualTo("Src");
+    }
 }

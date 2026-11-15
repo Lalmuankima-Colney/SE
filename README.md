@@ -13,6 +13,7 @@ PIEMS provides reliable, offline personal accounting:
 - **Budgets & Alerts:** Monthly category spending limits with threshold alerts (80% warning, 100% exceeded) via the Observer pattern.
 - **Recurring Transactions:** Automated scheduled daily, weekly, and monthly transactions with month-end date clamping.
 - **Savings Goals:** Target tracking with progress visualization.
+- **Graphical User Interface (GUI):** Desktop Swing GUI with two-pane layout, real-time budget status badge, 2-row filter bar, transaction table displaying account and category names, empty-state guidance, and synthetic demo data loader (D-40, D-48).
 - **Reports:** Monthly summaries, category breakdowns (Hare-Niemeyer percentage rounding), and cash-flow trends.
 - **CSV Data Exchange:** Lossless export and statement import with duplicate detection and line-level error reporting.
 
@@ -48,7 +49,7 @@ The codebase strictly adheres to the following architectural rules:
 
 All core documentation lives in the `docs/` directory:
 - [docs/SRS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/SRS.md) – Software Requirements Specification (v0.8, IEEE 29148 structure).
-- [docs/DECISIONS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/DECISIONS.md) – Architectural Decision Records (D-01 through D-47).
+- [docs/DECISIONS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/DECISIONS.md) – Architectural Decision Records (D-01 through D-49).
 - [docs/COVERAGE.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/COVERAGE.md) – Requirements Traceability Matrix and Syllabus Topic Coverage.
 - [docs/TEST_PLAN.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/TEST_PLAN.md) – Verification and Validation Test Plan (IEEE 829 structure).
 - [docs/RISKS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/RISKS.md) – Project Risk Register (R1 through R16).

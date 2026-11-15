@@ -242,6 +242,14 @@ Fill from tool output at the end of each sprint.
 | Sprint 3 (Reports, Exporters, Search, GUI, tag v0.3) | 281 | 281 | 0 | 93.1% (Domain: 651/699) | 80.2% (Domain: 296/369) | 2026-11-15 |
 | Sprint 4 (QA Campaign & Hardening, tag v0.9) | 371 | 371 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
 | Sprint 5 (Final Release, tag v1.0) | 384 | 384 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
+| Maintenance Step 8.1 (D-48) | 396 | 396 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
+| Maintenance Step 8.1 (D-49, Balances & Dialogs) | 400 | 400 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
+
+### Supporting Tests for Decision D-48 & D-49 (Unmapped in COVERAGE.md Section 5)
+These tests support Decisions D-48 and D-49 (GUI usability, demo data loader, name display, live balances, dialog creation, and form reset) and remain unmapped to specific functional requirements in COVERAGE.md Section 5 per traceability policy:
+- `DemoDataLoaderTest`: 6 tests verifying accounts, categories, budget in WARNING, date clamping, all-or-nothing rollback atomicity, and non-empty refusal.
+- `MainPresenterTest`: 8 supporting tests verifying empty-state guidance on `addExpense`, demo load view refresh, demo load refusal, table model column names, account creation, category creation, form reset, and live balance/net worth initialization.
+- `FinanceServiceTest`: 2 supporting tests verifying `TransactionView` name resolution across operations, transfer legs, and archived accounts/categories.
 
 ## 14. Defect log
 Lifecycle: New, Assigned, Fixed, Verified, Closed. Track in GitHub Issues with labels for severity and for the phase in which the defect was found.
@@ -251,6 +259,7 @@ Lifecycle: New, Assigned, Fixed, Verified, Closed. Track in GitHub Issues with l
 | F-06 | UC-03 Alt 6a save failure exception type unspecified; clarified under D-13 as checked PersistenceException | Minor | Phase F (Step 6.3) | Closed | `ExpenseUseCaseFlowBlackBoxTest.alt6aSaveFailsRollsBackAndSurfacesPersistenceException` (TC-FR04-06) |
 | F-07 | FR-12 status transition on over-contribution (>100%) unspecified; clarified as retaining ACHIEVED status under D-35 | Minor | Phase F (Step 6.3) | Closed | `StateTransitionBlackBoxTest.savingsGoalOverContributionMaintainsAchievedStatus` (TC-FR12-07) |
 | F-08 | FR-10 budget hysteresis downward event dispatch unspecified; clarified under D-28 as silent re-arming | Minor | Phase F (Step 6.3) | Closed | `StateTransitionBlackBoxTest.budgetHysteresisResetBelowEightyPercentRearmsAlertWithoutFiringEvent` (TC-FR10-14) |
+| F-09 | FR-07 net worth calculation excludes credit card debt (outstanding debt tracked separately due to non-negative Money under D-24/D-31) | Medium | Phase H (Step 8.1) | Open | Flagged in Decision D-48 |
 
 ### Hardening Improvements (Step 6.8 Proposals, Separate from Defects)
 - **P-301 (Network Isolation):** Enforced architectural rule in `scripts/CheckPackages.java` forbidding `java.net.*` and `javax.net.*` in `src/main`; linked test `PackageDependencyTest.checkPackagesForbidsNetworkImports` (TC-NFR05-02). Status: Implemented.

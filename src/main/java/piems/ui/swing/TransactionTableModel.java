@@ -16,11 +16,11 @@ import piems.service.TransactionView;
 public class TransactionTableModel extends AbstractTableModel {
 
     private static final String[] COLUMN_NAMES = {
-        "Date", "Kind", "Account ID", "Category ID", "Amount", "Note"
+        "Date", "Kind", "Account", "Category", "Amount", "Note"
     };
 
     private static final Class<?>[] COLUMN_CLASSES = {
-        LocalDate.class, String.class, Long.class, String.class, String.class, String.class
+        LocalDate.class, String.class, String.class, String.class, String.class, String.class
     };
 
     private List<TransactionView> transactions = Collections.emptyList();
@@ -71,8 +71,12 @@ public class TransactionTableModel extends AbstractTableModel {
         return switch (columnIndex) {
             case 0 -> tx.date();
             case 1 -> tx.kind();
-            case 2 -> tx.accountId();
-            case 3 -> (tx.categoryId() != null) ? String.valueOf(tx.categoryId()) : "-";
+            case 2 -> (tx.accountName() != null && !tx.accountName().isBlank())
+                    ? tx.accountName()
+                    : String.valueOf(tx.accountId());
+            case 3 -> (tx.categoryName() != null && !tx.categoryName().isBlank())
+                    ? tx.categoryName()
+                    : "(none)";
             case 4 -> tx.amount().toString();
             case 5 -> (tx.note() != null) ? tx.note() : "";
             default -> null;

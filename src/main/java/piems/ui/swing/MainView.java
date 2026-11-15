@@ -4,6 +4,7 @@ import java.util.List;
 import piems.domain.Account;
 import piems.domain.BudgetStatus;
 import piems.domain.CategoryComponent;
+import piems.domain.Money;
 import piems.service.TransactionView;
 
 /**
@@ -68,6 +69,14 @@ public interface MainView {
      * Clears input fields on the expense recording form.
      */
     void clearExpenseInputs();
+
+    /**
+     * Displays derived account balances and aggregate net worth (FR-07).
+     *
+     * @param balances list of account balance view models
+     * @param netWorth aggregate net worth across accounts
+     */
+    void showAccountBalances(List<AccountBalanceItem> balances, Money netWorth);
 
     /**
      * Toggles the busy/loading state indicator on the view.

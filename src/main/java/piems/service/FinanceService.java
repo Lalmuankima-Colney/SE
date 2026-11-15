@@ -645,8 +645,10 @@ public class FinanceService {
      * @throws PersistenceException if querying fails
      */
     public List<TransactionView> listTransactionsForAccount(long accountId) throws PersistenceException {
+        Map<Long, String> accNames = loadAccountNameMap();
+        Map<Long, String> catNames = loadCategoryNameMap();
         return transactionRepository.findByAccountId(accountId).stream()
-                .map(FinanceService::toView)
+                .map(r -> toView(r, accNames, catNames))
                 .toList();
     }
 
@@ -657,8 +659,10 @@ public class FinanceService {
      * @throws PersistenceException if querying fails
      */
     public List<TransactionView> listAllTransactions() throws PersistenceException {
+        Map<Long, String> accNames = loadAccountNameMap();
+        Map<Long, String> catNames = loadCategoryNameMap();
         return transactionRepository.findAll().stream()
-                .map(FinanceService::toView)
+                .map(r -> toView(r, accNames, catNames))
                 .toList();
     }
 
@@ -671,8 +675,10 @@ public class FinanceService {
      */
     public List<TransactionView> findTransactions(TransactionQuery query) throws PersistenceException {
         Objects.requireNonNull(query, "query cannot be null");
+        Map<Long, String> accNames = loadAccountNameMap();
+        Map<Long, String> catNames = loadCategoryNameMap();
         return transactionRepository.findByQuery(query).stream()
-                .map(FinanceService::toView)
+                .map(r -> toView(r, accNames, catNames))
                 .toList();
     }
 
@@ -710,10 +716,40 @@ public class FinanceService {
         return findTransactions(builder.build());
     }
 
-    private static TransactionView toView(TransactionRecord r) {
+    private TransactionView toView(
+            TransactionRecord r,
+            Map<Long, String> accountNames,
+            Map<Long, String> categoryNames
+    ) {
+        String accName = accountNames.getOrDefault(r.accountId(), "Account #" + r.accountId());
+        String catName = (r.categoryId() != null) ? categoryNames.get(r.categoryId()) : null;
         return new TransactionView(
-                r.id(), r.kind(), r.date(), r.amount(), r.note(), r.accountId(), r.transferLinkId(), r.categoryId()
+                r.id(), r.kind(), r.date(), r.amount(), r.note(),
+                r.accountId(), r.transferLinkId(), r.categoryId(),
+                accName, catName
         );
+    }
+
+    private TransactionView toView(TransactionRecord r) {
+        try {
+            String accName = accountRepository.findById(r.accountId())
+                    .map(Account::name)
+                    .orElse("Account #" + r.accountId());
+            String catName = (r.categoryId() != null)
+                    ? categoryRepository.findById(r.categoryId()).map(CategoryComponent::name).orElse(null)
+                    : null;
+            return new TransactionView(
+                    r.id(), r.kind(), r.date(), r.amount(), r.note(),
+                    r.accountId(), r.transferLinkId(), r.categoryId(),
+                    accName, catName
+            );
+        } catch (PersistenceException e) {
+            return new TransactionView(
+                    r.id(), r.kind(), r.date(), r.amount(), r.note(),
+                    r.accountId(), r.transferLinkId(), r.categoryId(),
+                    "Account #" + r.accountId(), null
+            );
+        }
     }
 
     /**
@@ -1124,5 +1160,42 @@ public class FinanceService {
             map.put(c.id(), c.name());
         }
         return map;
+    }
+
+    /**
+     * Deletes an account by its unique identifier (used for rollback cleanup).
+     *
+     * @param id account ID
+     * @throws PersistenceException if deletion fails
+     */
+    public void deleteAccount(long id) throws PersistenceException {
+        accountRepository.delete(id);
+    }
+
+    /**
+     * Deletes a budget by category identifier and month (used for rollback cleanup).
+     *
+     * @param categoryId category identifier
+     * @param month      calendar month
+     * @throws PersistenceException if deletion fails
+     */
+    public void deleteBudget(long categoryId, YearMonth month) throws PersistenceException {
+        Optional<Budget> opt = budgetRepository.findByCategoryAndMonth(categoryId, month);
+        if (opt.isPresent()) {
+            budgetRepository.delete(opt.get().getId());
+        }
+    }
+
+    /**
+     * Loads synthetic demonstration data into an empty ledger (Decision D-48).
+     *
+     * @throws ValidationException        if ledger already has accounts
+     * @throws PersistenceException       if database operation fails
+     * @throws RecordNotFoundException    if referenced entity not found
+     * @throws InsufficientFundsException if account balance is insufficient
+     */
+    public void loadDemoData() throws ValidationException, PersistenceException,
+            RecordNotFoundException, InsufficientFundsException {
+        new DemoDataLoader(this, this.clock).load();
     }
 }

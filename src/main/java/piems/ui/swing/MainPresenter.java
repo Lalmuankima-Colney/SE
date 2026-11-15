@@ -2,6 +2,7 @@ package piems.ui.swing;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +13,9 @@ import piems.domain.Budget;
 import piems.domain.BudgetStatus;
 import piems.domain.CategoryComponent;
 import piems.domain.Money;
+import piems.domain.PersistenceException;
+import piems.domain.RecordNotFoundException;
+import piems.domain.ValidationException;
 import piems.service.FinanceService;
 import piems.service.TransactionView;
 
@@ -69,18 +73,43 @@ public class MainPresenter {
     }
 
     /**
-     * Initializes the view by loading accounts, categories, and initial transactions.
+     * Initializes the view by loading accounts, balances, net worth, categories, and initial transactions.
      */
     public void initialize() {
         runAsync(() -> {
             List<Account> accounts = financeService.listAccounts();
+            List<AccountBalanceItem> balanceItems = loadBalanceItems(accounts);
+            Money netWorth = financeService.getNetWorth();
             List<CategoryComponent> categories = financeService.listCategories();
             List<TransactionView> transactions = financeService.listAllTransactions();
             uiExecutor.execute(() -> {
                 view.setAccounts(accounts);
+                view.showAccountBalances(balanceItems, netWorth);
                 view.setCategories(categories);
                 view.showTransactions(transactions);
             });
+        });
+    }
+
+    private List<AccountBalanceItem> loadBalanceItems(List<Account> accounts)
+            throws PersistenceException, RecordNotFoundException {
+        List<AccountBalanceItem> items = new ArrayList<>();
+        for (Account a : accounts) {
+            Money bal = financeService.getAccountBalance(a.id());
+            items.add(new AccountBalanceItem(a.id(), a.name(), a.type(), bal));
+        }
+        return items;
+    }
+
+    /**
+     * Refreshes account balances and net worth asynchronously (FR-07).
+     */
+    public void refreshBalances() {
+        runAsync(() -> {
+            List<Account> accounts = financeService.listAccounts();
+            List<AccountBalanceItem> balanceItems = loadBalanceItems(accounts);
+            Money netWorth = financeService.getNetWorth();
+            uiExecutor.execute(() -> view.showAccountBalances(balanceItems, netWorth));
         });
     }
 
@@ -124,25 +153,111 @@ public class MainPresenter {
      * @param note       optional note
      */
     public void addExpense(Long accountId, Long categoryId, String amountText, LocalDate date, String note) {
-        if (accountId == null) {
-            view.showErrorMessage("Please select an account.");
-            return;
-        }
-        if (amountText == null || amountText.trim().isEmpty()) {
-            view.showErrorMessage("Please enter an expense amount.");
-            return;
-        }
         runAsync(() -> {
+            if (financeService.listAccounts().isEmpty()) {
+                throw new ValidationException("Create an account first, or load demo data");
+            }
+            if (accountId == null) {
+                uiExecutor.execute(() -> view.showErrorMessage("Please select an account."));
+                return;
+            }
+            if (amountText == null || amountText.trim().isEmpty()) {
+                uiExecutor.execute(() -> view.showErrorMessage("Please enter an expense amount."));
+                return;
+            }
             Money amount = Money.of(amountText.trim());
             financeService.recordExpense(accountId, categoryId, amount, date, note);
             uiExecutor.execute(() -> {
                 view.showSuccessMessage("Expense recorded successfully: " + amount);
                 view.clearExpenseInputs();
                 refreshTransactions();
+                refreshBalances();
                 if (categoryId != null) {
                     checkBudgetStatus(categoryId, YearMonth.from(date != null ? date : LocalDate.now()));
                 }
             });
+        });
+    }
+
+    /**
+     * Loads synthetic demonstration data into an empty ledger (Decision D-48).
+     */
+    public void loadDemoData() {
+        runAsync(() -> {
+            financeService.loadDemoData();
+            List<Account> accounts = financeService.listAccounts();
+            List<AccountBalanceItem> balanceItems = loadBalanceItems(accounts);
+            Money netWorth = financeService.getNetWorth();
+            List<CategoryComponent> categories = financeService.listCategories();
+            List<TransactionView> transactions = financeService.listAllTransactions();
+            uiExecutor.execute(() -> {
+                view.setAccounts(accounts);
+                view.showAccountBalances(balanceItems, netWorth);
+                view.setCategories(categories);
+                view.showTransactions(transactions);
+                view.showSuccessMessage("Demo data loaded successfully.");
+            });
+        });
+    }
+
+    /**
+     * Creates and persists a new account through the service facade (FR-01).
+     *
+     * @param name               account display name
+     * @param type               account type ("CASH", "BANK", "CREDIT_CARD")
+     * @param initialBalanceText opening balance or credit limit amount string
+     */
+    public void addAccount(String name, String type, String initialBalanceText) {
+        runAsync(() -> {
+            if (name == null || name.trim().isEmpty()) {
+                throw new ValidationException("Account name cannot be empty.");
+            }
+            if (type == null || type.trim().isEmpty()) {
+                throw new ValidationException("Please select an account type.");
+            }
+            Money amount = Money.of((initialBalanceText != null && !initialBalanceText.trim().isEmpty())
+                    ? initialBalanceText.trim() : "0.00");
+            Account created = switch (type.trim().toUpperCase()) {
+                case "CASH" -> financeService.createCashAccount(name.trim(), amount);
+                case "BANK" -> financeService.createBankAccount(name.trim(), amount);
+                case "CREDIT_CARD" -> financeService.createCreditCardAccount(name.trim(), amount);
+                default -> throw new ValidationException("Unknown account type: " + type);
+            };
+            uiExecutor.execute(() -> {
+                view.showSuccessMessage("Account created: " + created.name());
+                initialize();
+            });
+        });
+    }
+
+    /**
+     * Creates and persists a new category through the service facade (FR-05).
+     *
+     * @param name     category display name
+     * @param kind     category kind ("EXPENSE" or "INCOME")
+     * @param parentId optional parent group ID
+     */
+    public void addCategory(String name, String kind, Long parentId) {
+        runAsync(() -> {
+            if (name == null || name.trim().isEmpty()) {
+                throw new ValidationException("Category name cannot be empty.");
+            }
+            String validKind = (kind != null && !kind.trim().isEmpty()) ? kind.trim().toUpperCase() : "EXPENSE";
+            CategoryComponent created = financeService.createCategory(name.trim(), validKind, parentId);
+            uiExecutor.execute(() -> {
+                view.showSuccessMessage("Category created: " + created.name());
+                initialize();
+            });
+        });
+    }
+
+    /**
+     * Resets the expense recording input fields and clears budget evaluation.
+     */
+    public void clearExpenseForm() {
+        uiExecutor.execute(() -> {
+            view.clearExpenseInputs();
+            view.showBudgetStatus("[NO BUDGET] Select category", null);
         });
     }
 

@@ -62,6 +62,8 @@ Total decisions: 47 (D-01 through D-47).
 | D-45 | Decoupling Documentation Consistency Test from Build Artifacts | Accepted | Quality |
 | D-46 | Budget SQLite Persistence, Preloading, and Restart Hysteresis Re-arming | Accepted | Persistence |
 | D-47 | Deferral of Service Reachability and Persistence for Recurring Rules and Savings Goals | Accepted | Scope |
+| D-48 | GUI empty-state validation, demo data loader, and transaction table name resolution | Accepted | UI |
+| D-49 | GUI live account balances, net worth display, modal entity creation, and form reset | Accepted | UI |
 
 ## Entries
 
@@ -446,6 +448,31 @@ Total decisions: 47 (D-01 through D-47).
 - **Alternatives:** Marking FR-11 and FR-12 as fully verified based on domain tests alone (rejected as misleading since the user and service cannot reach them); rushing partial facade implementations without UI or end-to-end tests (rejected as violating Definition of Done); marking them completely unverified (rejected because domain logic is rigorously tested).
 - **Consequences / revisit when:** Existing unit and scenario tests for `RecurringRule`, `RecurringGenerator`, and `SavingsGoal` remain in the test suite and pass cleanly. Revisit when implementing Part B (service facade methods, `GoalRepository`, `RecurringRuleRepository`, and corresponding UI controls).
 - **Traces to:** FR-11, FR-12, FR-18, D-11, D-35, D-46, COVERAGE.md Section 7, SRS §3.1.
+
+### D-48 GUI Empty-State Guidance, Demo Data Loader, Transaction Name Display, and Credit Card Debt Discrepancy Flag
+- **Date / status:** 2026-11-15 / Accepted
+- **Decision:**
+  1. **Empty-state validation:** In `MainPresenter.addExpense()`, if no accounts exist in the ledger, throw `ValidationException("Create an account first, or load demo data")` routed via the top-level uncaught exception handler (`view.showErrorMessage`), giving users actionable guidance instead of a confusing "Please select an account." error.
+  2. **Filter bar layout clipping fix:** In `MainFrame.buildFilterBar()`, replace the single-line `FlowLayout` with a two-row `BorderLayout` where filter inputs occupy row 1 and action buttons (`Filter`, `Reset`) occupy row 2, preventing `FlowLayout` wrapping and clipping behind `BorderLayout.NORTH`.
+  3. **Synthetic Demo Data Loader:** Introduce `DemoDataLoader` (delegated via `FinanceService.loadDemoData()`) to populate 3 accounts matching `scripts/seed-trial.sql` (`Cash Wallet`, `Checking`, `Visa Card`), 5 categories including a category group (`Living Expenses` with child `Utilities`, `Groceries`, `Dining Out`, `Salary`), 1 budget in `WARNING` status (Groceries: ₹425 spent of ₹500 limit, 85%), and 16 user operations yielding 17 stored rows with dates capped at `LocalDate.now(clock)`. Loading is strictly all-or-nothing with reverse-dependency rollback on failure, and refuses with `"Demo data can only be loaded into an empty ledger"` if accounts already exist.
+  4. **Transaction Table Name Resolution:** Enrich `TransactionView` with `accountName` and `categoryName` (keeping the 8-arg constructor for backwards compatibility). `FinanceService` resolves names by pre-populating account and category maps in batch once per query, preventing $N+1$ query degradation so the S5 10k-transaction benchmark stays fast (< 40 ms vs 1,000 ms target). The table displays `"Account"` and `"Category"` (`"(none)"` when category is null). The CSV export format remains 100% unchanged.
+  5. **Credit Card Debt Discrepancy Flag:** In `FinanceService.getNetWorth()`, net worth is computed by summing `getDerivedBalance(id)` across active accounts. For credit card accounts, `derivedBalance` is 0 and debt is tracked separately in `outstandingDebt` because `Money` is strictly non-negative under D-24 and D-31. Thus, credit card debt is excluded from net worth in the current implementation (yielding ₹4,225.00 instead of ₹3,735.00 for demo data). This is explicitly flagged as a potential defect against Requirement FR-07 ("Net worth equals the sum of account balances, where credit card balances reduce net worth").
+- **Why:** Improves initial user experience on empty ledgers, provides synthetic evaluation data without manual entry, prevents UI component clipping in narrow windows, provides readable transaction listings without sacrificing query performance, and documents the discrepancy between non-negative money and FR-07 net worth specification.
+- **Alternatives:** Hardcoding SQL rollback scripts; loading demo data on background thread directly from UI without facade; individual `findById` queries per transaction (rejected due to $N+1$ query performance degradation); silently allowing negative `Money` (rejected per D-24 and D-31).
+- **Consequences / revisit when:** Supported by `DemoDataLoaderTest`, `MainPresenterTest`, and `FinanceServiceTest` (supporting tests for D-48; unmapped in COVERAGE.md Section 5 per prompt instructions). Revisit when implementing an "Add Account" dialog and resolving credit card net worth computation rules with stakeholders.
+- **Traces to:** FR-03, FR-07, FR-08, NFR-01, NFR-04, NFR-08, D-05, D-13, D-15, D-24, D-31, D-40.
+
+### D-49 GUI Live Account Balances, Net Worth Display, Modal Entity Creation, and Form Reset
+- **Date / status:** 2026-11-15 / Accepted
+- **Decision:**
+  1. **Account Balances & Net Worth Display:** Add an "Account Balances & Net Worth" panel to the left pane of `MainFrame`, displaying total aggregate net worth and a list of derived balances for all active accounts (FR-07). In addition, display an `Available: ₹...` live balance label next to the Account dropdown under Record Expense that updates automatically on account selection.
+  2. **Entity Creation Dialogs:** Add `[+ New]` buttons next to both Account and Category selection controls. The account dialog allows users to specify name, type (`BANK`, `CASH`, `CREDIT_CARD`), and opening balance / limit, invoking `FinanceService.create*Account()` asynchronously. The category dialog allows users to specify name and kind (`EXPENSE`, `INCOME`), invoking `FinanceService.createCategory()` asynchronously.
+  3. **Category Tree Flattening:** `MainFrame.setCategories()` traverses composite category hierarchies recursively (`CategoryComponent.children()`), displaying nested paths (e.g., `Living Expenses > Utilities`) so child categories are selectable in both expense and filter combo boxes.
+  4. **Form Reset & Safe Filter Reset:** Add a `Clear Form` button next to `Record Expense` that resets form fields (Amount, Note, Date back to today, Category back to `(None)`). In the Search & Filter panel, add bounds-checking guards in `onResetFilterClicked()` to prevent `IllegalArgumentException` on empty combo boxes and provide clear status feedback.
+- **Why:** Eliminates GUI deadlocks on fresh databases where users could not create accounts or categories without leaving the desktop application, allows users to check account balances and net worth directly in the GUI (FR-07), exposes child categories within composite trees, and prevents uncaught EDT exceptions on filter reset.
+- **Alternatives:** Multi-window MDI layout (rejected as overly complex); inline editable table for accounts (rejected to maintain MVP decoupling).
+- **Consequences / revisit when:** Supported by `AccountBalanceItem` record and unit tests in `MainPresenterTest` (17 tests green, total suite 400 tests).
+- **Traces to:** FR-01, FR-05, FR-07, FR-08, NFR-08, D-05, D-40, D-48.
 
 ## Template for a new entry
 

@@ -147,10 +147,125 @@ class MainPresenterTest {
         assertThat(fakeView.lastErrorMessage).contains("Simulated unexpected failure");
     }
 
+    @Test
+    @DisplayName("D-48: addExpense with no accounts shows clear empty state message")
+    void addExpenseWithNoAccountsShowsHelpfulEmptyStateMessage() throws Exception {
+        // Setup empty service with no accounts
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("UTC"));
+        InMemoryTransactionRepository txRepo = new InMemoryTransactionRepository();
+        InMemoryAccountRepository accRepo = new InMemoryAccountRepository(txRepo);
+        InMemoryCategoryRepository catRepo = new InMemoryCategoryRepository(txRepo);
+        FinanceService emptyService = new FinanceService(accRepo, catRepo, txRepo, fixedClock);
+        FakeMainView emptyView = new FakeMainView();
+        MainPresenter emptyPresenter = new MainPresenter(emptyService, emptyView, Runnable::run, Runnable::run);
+
+        emptyPresenter.addExpense(null, null, "100.00", LocalDate.of(2026, 3, 15), "Lunch");
+
+        assertThat(emptyView.lastErrorMessage).isEqualTo("Create an account first, or load demo data");
+    }
+
+    @Test
+    @DisplayName("D-48: loadDemoData populates demo accounts, categories, and transactions into empty view")
+    void loadDemoDataRefreshesViewWithAccountsCategoriesAndTransactions() {
+        // Setup empty service
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("UTC"));
+        InMemoryTransactionRepository txRepo = new InMemoryTransactionRepository();
+        InMemoryAccountRepository accRepo = new InMemoryAccountRepository(txRepo);
+        InMemoryCategoryRepository catRepo = new InMemoryCategoryRepository(txRepo);
+        FinanceService emptyService = new FinanceService(accRepo, catRepo, txRepo, fixedClock);
+        FakeMainView emptyView = new FakeMainView();
+        MainPresenter emptyPresenter = new MainPresenter(emptyService, emptyView, Runnable::run, Runnable::run);
+
+        emptyPresenter.loadDemoData();
+
+        assertThat(emptyView.lastSuccessMessage).isEqualTo("Demo data loaded successfully.");
+        assertThat(emptyView.accounts).hasSize(3);
+        assertThat(emptyView.categories).hasSize(4);
+        int totalCategories = emptyView.categories.stream().mapToInt(c -> 1 + c.childCount()).sum();
+        assertThat(totalCategories).isEqualTo(5);
+        assertThat(emptyView.transactions).hasSize(17);
+    }
+
+    @Test
+    @DisplayName("D-48: loadDemoData displays refusal error message when account already exists")
+    void loadDemoDataRefusesWhenAccountAlreadyExists() {
+        // bankAccount already created in setUp()
+        presenter.loadDemoData();
+
+        assertThat(fakeView.lastErrorMessage).isEqualTo("Demo data can only be loaded into an empty ledger");
+    }
+
+    @Test
+    @DisplayName("D-48: table model renders Account and Category names instead of numeric IDs")
+    void tableModelDisplaysNamesInsteadOfIds() {
+        TransactionTableModel model = new TransactionTableModel();
+        assertThat(model.getColumnName(2)).isEqualTo("Account");
+        assertThat(model.getColumnName(3)).isEqualTo("Category");
+
+        TransactionView viewWithNames = new TransactionView(
+                1L, "EXPENSE", LocalDate.of(2026, 3, 10), Money.of("45.00"), "Bakery",
+                10L, null, 20L, "Cash Wallet", "Groceries"
+        );
+        TransactionView viewNoCategory = new TransactionView(
+                2L, "EXPENSE", LocalDate.of(2026, 3, 11), Money.of("15.00"), "Tips",
+                10L, null, null, "Cash Wallet", null
+        );
+        model.setTransactions(List.of(viewWithNames, viewNoCategory));
+
+        assertThat(model.getValueAt(0, 2)).isEqualTo("Cash Wallet");
+        assertThat(model.getValueAt(0, 3)).isEqualTo("Groceries");
+        assertThat(model.getValueAt(1, 2)).isEqualTo("Cash Wallet");
+        assertThat(model.getValueAt(1, 3)).isEqualTo("(none)");
+    }
+
+    @Test
+    @DisplayName("D-49: addAccount creates account through facade and refreshes accounts and balances")
+    void addAccountSuccessfullyPersistsAccountAndRefreshesView() {
+        presenter.addAccount("Wallet", "CASH", "250.00");
+
+        assertThat(fakeView.lastSuccessMessage).isEqualTo("Account created: Wallet");
+        assertThat(fakeView.accounts).hasSize(2);
+        assertThat(fakeView.accounts).extracting(Account::name).contains("Checking", "Wallet");
+        assertThat(fakeView.balances).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("D-49: addCategory creates category through facade and refreshes view")
+    void addCategorySuccessfullyPersistsCategoryAndRefreshesView() {
+        presenter.addCategory("Utilities", "EXPENSE", null);
+
+        assertThat(fakeView.lastSuccessMessage).isEqualTo("Category created: Utilities");
+        assertThat(fakeView.categories).hasSize(2);
+        assertThat(fakeView.categories).extracting(CategoryComponent::name).contains("Food", "Utilities");
+    }
+
+    @Test
+    @DisplayName("D-49: clearExpenseForm clears inputs and resets budget status")
+    void clearExpenseFormResetsInputsAndBudgetStatus() {
+        presenter.clearExpenseForm();
+
+        assertThat(fakeView.expenseInputsCleared).isTrue();
+        assertThat(fakeView.lastBudgetStatusText).isEqualTo("[NO BUDGET] Select category");
+        assertThat(fakeView.lastBudgetStatus).isNull();
+    }
+
+    @Test
+    @DisplayName("D-49: initialize populates account balances and calculates net worth")
+    void initializePopulatesBalancesAndNetWorth() {
+        presenter.initialize();
+
+        assertThat(fakeView.balances).hasSize(1);
+        assertThat(fakeView.balances.get(0).name()).isEqualTo("Checking");
+        assertThat(fakeView.balances.get(0).balance()).isEqualTo(Money.of("1000.00"));
+        assertThat(fakeView.lastNetWorth).isEqualTo(Money.of("1000.00"));
+    }
+
     private static class FakeMainView implements MainView {
         private List<Account> accounts = new ArrayList<>();
         private List<CategoryComponent> categories = new ArrayList<>();
         private List<TransactionView> transactions = new ArrayList<>();
+        private List<AccountBalanceItem> balances = new ArrayList<>();
+        private Money lastNetWorth;
         private String lastErrorMessage;
         private String lastSuccessMessage;
         private String lastBudgetStatusText;
@@ -165,6 +280,12 @@ class MainPresenterTest {
         @Override
         public void showTransactions(List<TransactionView> transactions) {
             this.transactions = transactions;
+        }
+
+        @Override
+        public void showAccountBalances(List<AccountBalanceItem> balances, Money netWorth) {
+            this.balances = balances;
+            this.lastNetWorth = netWorth;
         }
 
         @Override

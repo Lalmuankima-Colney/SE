@@ -174,6 +174,37 @@ After sprint 1, compare these hours with the COCOMO, function-point and story-po
 - **Retrospective:** Keep: test-first fail-first persistence checks (`RestartPersistenceCheckTest`), strict decoupling of UI from database through `FinanceService`, and continuous documentation consistency checks · Stop: leaving domain models unpersisted until late in the development cycle · Try: early end-to-end integration testing for all domain components in future projects.
 - **Release tag and changelog entry:** Tag `v1.0` (`CHANGELOG.md`).
 
+### Step 8.1 (Phase H Maintenance) – GUI Empty-State Guidance, Demo Data Loader, Transaction Name Display & Filter Bar Layout
+- **Dates:** 2026-11-15 (Completed)
+- **Goal:** Address GUI usability gaps identified during v1.0 demonstration: empty-state user guidance on fresh databases, clipped Reset button in Search & Filter bar, missing demo data population mechanism, and numeric account/category IDs in transaction table.
+- **Planned items:** Step 8.1 maintenance tasks.
+- **Completed items:**
+  - Empty-state validation in `MainPresenter.addExpense()` routing clear `ValidationException("Create an account first, or load demo data")` through top-level uncaught exception handler (`view.showErrorMessage`).
+  - Search & filter bar layout in `MainFrame` converted to 2-row `BorderLayout` (row 1 inputs, row 2 action buttons), eliminating button wrapping and clipping behind `BorderLayout.NORTH`.
+  - Synthetic `DemoDataLoader` implemented with all-or-nothing rollback atomicity, date capping at `LocalDate.now(clock)`, 3 accounts, 5 categories (including composite group), 1 budget in WARNING (Groceries ₹425/₹500), and 16 operations (17 stored rows). Refuses on non-empty ledger.
+  - "Load demo data" button added to `MainFrame` bottom bar with confirmation dialog emphasizing synthetic data nature.
+  - `TransactionView` enriched with `accountName` and `categoryName`, populated in batch by `FinanceService` via single-query name maps, maintaining S5 10k-transaction benchmark performance (median ~34 ms vs 1,000 ms target).
+  - Explicitly flagged credit card debt exclusion from `FinanceService.getNetWorth()` as potential defect against FR-07 under Decision D-48.
+  - `DemoDataLoaderTest`, `MainPresenterTest`, and `FinanceServiceTest` unit tests added/updated.
+- **Hours (planned / actual):** not provided / approx. 3 h (team estimate)
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 48 (D-01 through D-48; D-48 Accepted)
+- **Tests (from tool output):** 396 run, 396 passed, 0 failed (`DemoDataLoaderTest` 6, `MainPresenterTest` 13, `FinanceServiceTest` 21, `SystemScenarioTest` 8, total suite 396 tests; 0 Checkstyle violations; 0 package cycles).
+
+### Step 8.1 (Phase H Maintenance) – GUI Live Balances, Net Worth, Dialogs & Form Reset
+- **Dates:** 2026-11-15 (Completed)
+- **Goal:** Address GUI usability defects: lack of account balance & net worth visibility (FR-07), missing category options due to composite tree flattening, lack of GUI dialogs for creating accounts/categories, and non-responsive filter reset / missing expense form clear button.
+- **Planned items:** Option 1 maintenance enhancements.
+- **Completed items:**
+  - Added "Account Balances & Net Worth" panel to `MainFrame` left pane displaying aggregate net worth and derived balances for all accounts (FR-07).
+  - Added dynamic `Available: ₹...` balance indicator next to Account dropdown.
+  - Added `[+ New]` modal creation dialogs for accounts (Bank, Cash, Credit Card) and categories (Expense, Income).
+  - Flattened composite category hierarchy recursively so nested child categories appear in combo boxes.
+  - Added `Clear Form` button for expense form and safe bounds-checking guard with status feedback on filter reset.
+  - Added `AccountBalanceItem` view model and 4 unit tests in `MainPresenterTest` (total 17 tests).
+- **Hours (planned / actual):** not provided / approx. 2 h (team estimate)
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 49 (D-01 through D-49; D-49 Accepted)
+- **Tests (from tool output):** 400 run, 400 passed, 0 failed (`MainPresenterTest` 17, total suite 400 tests; 0 Checkstyle violations; 0 package cycles).
+
 ### Template for each further sprint
 - **Sprint / dates:**
 - **Goal:**
