@@ -1,0 +1,30 @@
+# Build and compilation
+target/
+*.class
+
+# Persistence
+*.db
+*.db-journal
+
+# Logs
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Antigravity and audit files per IMPLEMENTATION_PLAN.md
+GEMINI.md
+ANTIGRAVITY_PROMPTS.md
+.agents/
+.antigravityignore
+audit/

@@ -1,0 +1,191 @@
+classDiagram
+    direction TB
+
+    class Money {
+        -long minorUnits
+        -Currency currency
+        +ofMinor(long minorUnits)$ Money
+        +of(String amountStr)$ Money
+        +zero()$ Money
+        +minorUnits() long
+        +currency() Currency
+        +add(Money other) Money
+        +subtract(Money other) Money
+        +negate() Money
+        +compareTo(Money other) int
+        +equals(Object obj) boolean
+        +hashCode() int
+    }
+
+    class Account {
+        <<abstract>>
+        -Long id
+        -String name
+        -Money openingBalance
+        -boolean archived
+        +id() Long
+        +name() String
+        +openingBalance() Money
+        +isArchived() boolean
+        +balance()* Money
+        +canDebit(Money amount)* boolean
+        +apply(Transaction tx)* void
+    }
+
+    class CashAccount {
+        +canDebit(Money amount) boolean
+        +apply(Transaction tx) void
+    }
+
+    class BankAccount {
+        +canDebit(Money amount) boolean
+        +apply(Transaction tx) void
+    }
+
+    class CreditCardAccount {
+        -Money creditLimit
+        +creditLimit() Money
+        +canDebit(Money amount) boolean
+        +apply(Transaction tx) void
+    }
+
+    Account <|-- CashAccount
+    Account <|-- BankAccount
+    Account <|-- CreditCardAccount
+
+    class Transaction {
+        <<abstract>>
+        -Long id
+        -LocalDate date
+        -Money amount
+        -String note
+        -Account account
+        -CategoryComponent category
+        +id() Long
+        +date() LocalDate
+        +amount() Money
+        +note() String
+        +account() Account
+        +category() CategoryComponent
+        +effectOn(Account target)* Money
+    }
+
+    class Income {
+        +effectOn(Account target) Money
+    }
+
+    class Expense {
+        +effectOn(Account target) Money
+    }
+
+    class Transfer {
+        -Account toAccount
+        -String transferLinkId
+        +toAccount() Account
+        +transferLinkId() String
+        +effectOn(Account target) Money
+    }
+
+    Transaction <|-- Income
+    Transaction <|-- Expense
+    Transaction <|-- Transfer
+
+    class CategoryComponent {
+        <<abstract>>
+        -Long id
+        -String name
+        -String kind
+        -boolean archived
+        +id() Long
+        +name() String
+        +kind() String
+        +isArchived() boolean
+        +path()* String
+        +leaves()* List~Category~
+    }
+
+    class Category {
+        +path() String
+        +leaves() List~Category~
+    }
+
+    class CategoryGroup {
+        -List~CategoryComponent~ children
+        +add(CategoryComponent child) void
+        +remove(CategoryComponent child) void
+        +path() String
+        +leaves() List~Category~
+    }
+
+    CategoryComponent <|-- Category
+    CategoryComponent <|-- CategoryGroup
+    CategoryGroup *-- CategoryComponent
+
+    class Budget {
+        -Long id
+        -CategoryComponent category
+        -YearMonth month
+        -Money limit
+        +evaluate(Money spent) BudgetStatus
+    }
+
+    class BudgetStatus {
+        <<enumeration>>
+        OK
+        WARNING
+        EXCEEDED
+    }
+
+    class BudgetMonitor {
+        -List~BudgetListener~ listeners
+        +registerListener(BudgetListener listener) void
+        +unregisterListener(BudgetListener listener) void
+        +check(CategoryComponent category, Money spent) void
+    }
+
+    class BudgetListener {
+        <<interface>>
+        +onBudgetAlert(BudgetAlertEvent event) void
+    }
+
+    BudgetMonitor --> BudgetListener
+    Budget --> BudgetStatus
+    Budget --> CategoryComponent
+
+    class SavingsGoal {
+        -Long id
+        -String name
+        -Money targetAmount
+        -LocalDate deadline
+        -List~GoalContribution~ contributions
+        +addContribution(GoalContribution contribution) void
+        +currentAmount() Money
+        +isAchieved() boolean
+    }
+
+    class GoalContribution {
+        -Long id
+        -LocalDate date
+        -Money amount
+        +amount() Money
+        +date() LocalDate
+    }
+
+    SavingsGoal *-- GoalContribution
+
+    class RecurringRule {
+        -Long id
+        -String frequency
+        -LocalDate startDate
+        -LocalDate endDate
+        -LocalDate lastGenerated
+        +dueDates(LocalDate until) List~LocalDate~
+    }
+
+    Account --> Money
+    Transaction --> Money
+    Transaction --> Account
+    Transaction --> CategoryComponent
+    Budget --> Money
+    SavingsGoal --> Money
+    GoalContribution --> Money

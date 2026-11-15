@@ -1,0 +1,44 @@
+flowchart TD
+    subgraph UI_Layer ["Presentation Layer"]
+        UI["piems.ui\n(ConsoleApp, ConsoleMenu)"]
+    end
+
+    subgraph Service_Layer ["Application & Orchestration Layer"]
+        Service["piems.service\n(FinanceService Facade)"]
+    end
+
+    subgraph Report_Layer ["Reporting & Export Layer"]
+        Report["piems.report\n(ReportStrategy, Exporters)"]
+    end
+
+    subgraph Persistence_Layer ["Persistence Layer"]
+        Repo["piems.repository\n(Repositories, Schema, SQLite JDBC)"]
+    end
+
+    subgraph Domain_Layer ["Domain Core (Isolated)"]
+        Domain["piems.domain\n(Money, Accounts, Transactions,\nCategories, Budgets, Goals, Rules)"]
+    end
+
+    subgraph App_Root ["Composition Root"]
+        App["piems.app\n(Main Launcher & Dependency Injection)"]
+    end
+
+    App --> UI
+    App --> Service
+    App --> Repo
+    App --> Domain
+
+    UI --> Service
+    UI -.-> Domain
+
+    Service --> Domain
+    Service --> Report
+    Service --> Repo
+
+    Report --> Domain
+    Repo --> Domain
+
+    classDef core fill:#d4edda,stroke:#28a745,stroke-width:2px;
+    classDef layer fill:#e2e3e5,stroke:#383d41,stroke-width:1px;
+    class Domain core;
+    class UI,Service,Report,Repo,App layer;

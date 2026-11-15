@@ -1,0 +1,18 @@
+stateDiagram-v2
+    [*] --> Active : Goal created with target amount
+
+    state Active {
+        [*] --> InProgress
+        InProgress --> InProgress : Contribution added\n(total < target)
+        InProgress --> InProgress : Contribution edited/removed\n(total < target)
+    }
+
+    Active --> Achieved : Contribution added/edited\n[total >= target]
+    Achieved --> Active : Contribution edited/removed\n[total < target]
+
+    note right of Active
+        Decision Q-008:
+        Preliminary drafts proposed 'Overdue' and 'Cancelled' states.
+        Per human decision Q-008, these are deferred to post-v1.0.
+        v1.0 models Active <--> Achieved transitions only.
+    end note

@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    exec "$JAVA_HOME/bin/java" scripts/CheckPackages.java "$@"
+else
+    exec java scripts/CheckPackages.java "$@"
+fi

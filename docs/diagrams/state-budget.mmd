@@ -1,0 +1,22 @@
+stateDiagram-v2
+    [*] --> OK : Monthly budget defined (limit > 0)
+
+    OK --> WARNING : Expense recorded\n[spent >= 80% limit && spent < 100%]\n(Emit WARNING alert)
+    OK --> EXCEEDED : Large expense recorded\n[spent >= 100% limit]\n(Emit EXCEEDED alert)
+
+    WARNING --> EXCEEDED : Further expense recorded\n[spent >= 100% limit]\n(Emit EXCEEDED alert)
+    WARNING --> WARNING : Expense recorded\n[spent < 100% limit]\n(No duplicate alert)
+
+    EXCEEDED --> EXCEEDED : Further expense recorded\n(No duplicate alert)
+
+    %% Hysteresis transitions per Decision D-28
+    WARNING --> OK : Expense reduced/deleted\n[spent < 80% limit]\n(Reset alert state)
+    EXCEEDED --> OK : Expense reduced/deleted\n[spent < 80% limit]\n(Reset alert state)
+    EXCEEDED --> WARNING : Expense reduced/deleted\n[80% <= spent < 100% limit]\n(Rearm EXCEEDED alert)
+
+    note right of WARNING
+        Decision D-09 & D-28:
+        Alerts emitted via Observer pattern (never exceptions).
+        Hysteresis resets alert status only when spending drops
+        below the 80% warning threshold.
+    end note
