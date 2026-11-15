@@ -20,6 +20,7 @@ public class SqliteDatabase implements AutoCloseable {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final BudgetRepository budgetRepository;
 
     /**
      * Opens a connection to the specified SQLite database and initializes tables.
@@ -36,6 +37,7 @@ public class SqliteDatabase implements AutoCloseable {
             this.accountRepository = new JdbcAccountRepository(jdbcUrl);
             this.categoryRepository = new JdbcCategoryRepository(jdbcUrl);
             this.transactionRepository = new JdbcTransactionRepository(jdbcUrl);
+            this.budgetRepository = new JdbcBudgetRepository(jdbcUrl, this.categoryRepository);
         } catch (SQLException e) {
             throw new PersistenceException("Failed to initialize SQLite database: " + e.getMessage(), e);
         }
@@ -72,6 +74,15 @@ public class SqliteDatabase implements AutoCloseable {
      */
     public TransactionRepository transactionRepository() {
         return transactionRepository;
+    }
+
+    /**
+     * Returns the budget repository instance.
+     *
+     * @return budget repository
+     */
+    public BudgetRepository budgetRepository() {
+        return budgetRepository;
     }
 
     @Override

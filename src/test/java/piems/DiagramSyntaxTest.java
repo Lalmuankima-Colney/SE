@@ -70,9 +70,9 @@ class DiagramSyntaxTest {
     }
 
     @Test
-    @DisplayName("Audit: diagram-questions.md exists and documents design discrepancies")
+    @DisplayName("Diagrams: questions.md exists and documents design discrepancies")
     void diagramQuestionsDocumentExists() {
-        Path questionsPath = Path.of("audit", "diagram-questions.md");
+        Path questionsPath = DIAGRAMS_DIR.resolve("questions.md");
         assertThat(questionsPath).exists();
         assertThat(questionsPath).isNotEmptyFile();
     }

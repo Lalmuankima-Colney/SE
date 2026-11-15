@@ -32,6 +32,7 @@ public final class Main {
                     db.accountRepository(),
                     db.categoryRepository(),
                     db.transactionRepository(),
+                    db.budgetRepository(),
                     Clock.systemDefaultZone()
             );
             if (useGui) {

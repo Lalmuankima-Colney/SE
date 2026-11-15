@@ -64,7 +64,7 @@ It answers two questions: (1) where in the project is each syllabus topic demons
 
 | Topic | Where applied | Artifact / evidence | Status |
 |---|---|---|---|
-| Role of software engineering | Report section on the disciplines applied and the problems each prevented | Report | Planned |
+| Role of software engineering | Report section on the disciplines applied and the problems each prevented | docs/LIMITATIONS_AND_LESSONS.md; D-01..D-47 | Pass (Drafted in docs/LIMITATIONS_AND_LESSONS.md) |
 | Software evolution | Lehman's laws and evolution roadmap v1.1 to v2.0 | Project description 14.1 | Planned |
 | Legacy system structures | Old spreadsheet analysed as the legacy system | Report | Planned |
 | Legacy system design | Assessment of the spreadsheet design | Report | Planned |
@@ -157,14 +157,14 @@ It answers two questions: (1) where in the project is each syllabus topic demons
 
 | ID | Requirement (short) | Verified by | Status |
 |---|---|---|---|
-| NFR-01 | Exact money | Unit test summing 1,000 entries of 0.10 (TC-NFR01-01) | Planned |
+| NFR-01 | Exact money | Unit test summing 1,000 entries of 0.10 (TC-NFR01-01) | Pass (TC-NFR01-01 passed in MoneyTest.sumsThousandTenCentEntriesToExactlyOneHundred: 10000 minorUnits, 100.00) |
 | NFR-02 | Performance targets | Timed system test with 10,000 transactions (TC-NFR02-01) | Pass (TC-NFR02-01 passed in SystemScenarioTest.s5TenThousandTransactionsBenchmarkMeetsLatencyTargets: listing median 45 ms < 1 s, report median 32 ms < 2 s) |
 | NFR-03 | No partial writes | Fault-injection test on transfer (TC-NFR03-01) | Pass (TC-NFR03-01 passed in TransferAtomicityTest and JdbcSpikeTest) |
-| NFR-04 | Usability of adding an expense | Trial with 3 people (TC-NFR04-01) | Pass (TC-NFR04-01 passed in ConsoleScriptTest: <= 4 inputs) |
+| NFR-04 | Usability of adding an expense | Trial with 3 people (TC-NFR04-01) | automated input-count test passes; user trial pending |
 | NFR-05 | Local data only | Code review and dependency check (TC-NFR05-01, TC-NFR05-02) | Pass (TC-NFR05-01 verified via code review; TC-NFR05-02 verified via CheckPackages architectural rule in PackageDependencyTest) |
 | NFR-06 | Portability | Build and test on two operating systems if possible; CI multi-OS matrix (TC-NFR06-01) | Partially verified: Windows only; Linux and macOS not run |
 | NFR-07 | Maintainability targets | Metrics script and JaCoCo; line >= 80%, branch >= 70% (TC-NFR07-01) | Pass (scripts/check-packages: 0 cycles; PackageDependencyTest: 2 passed; JaCoCo domain line 97.2%, branch 82.8%; Checkstyle 0 violations) |
-| NFR-08 | Testability | Domain tests run with in-memory repositories only (TC-NFR08-01) | Planned |
+| NFR-08 | Testability | Domain tests run with in-memory repositories only (TC-NFR08-01) | Pass (TC-NFR08-01 passed in FinanceServiceTest: workflow runs with in-memory repositories; scripts/check-packages: 0 JDBC/UI imports in domain/service) |
 | NFR-09 | Modifiability | Design review: new report or account type touches at most two classes (TC-NFR09-01) | Pass (TC-NFR09-01 passed in NewStrategyNeedsNoServiceChangeTest: custom ReportStrategy runs with zero FinanceService modifications) |
 | NFR-10 | Recoverability | Migration test with backup (TC-NFR10-01) | Deferred (Could item, not implemented; schema migrations not built in v1.0) |
 
@@ -176,24 +176,26 @@ Fill the test IDs as tests are written (format `TC-FRxx-nn`). A requirement with
 |---|---|---|---|---|
 | FR-01 Accounts | UC-01 | `Account` hierarchy, `AccountRepository` | TC-FR01-01, TC-FR01-02, TC-FR01-03, TC-FR01-04 | Pass (TC-FR01-01 to TC-FR01-04 passed in CashAccountTest, AccountContractTest, DebitDecisionTableBlackBoxTest, and RequirementAcceptanceBlackBoxTest) |
 | FR-02 Income | UC-02 | `Income`, `FinanceService` | TC-FR02-01, TC-FR02-02, TC-FR02-03, TC-FR02-04, TC-FR02-05 | Pass (TC-FR02-01 to TC-FR02-05 passed in IncomeTest, TransactionFactoryTest, and RequirementAcceptanceBlackBoxTest; D-41 verified) |
-| FR-03 Expense | UC-03 | `Expense`, `Account.canDebit` (D-27) | TC-FR03-01, TC-FR03-02, TC-FR03-03, TC-FR03-04, TC-FR03-05, TC-FR03-07, TC-FR03-08, TC-FR03-09, TC-FR03-10, TC-FR03-11, TC-FR03-12, TC-FR03-13, TC-FR03-14 | Pass (TC-FR03-01 to TC-FR03-05, TC-FR03-07 to TC-FR03-14 passed in CashAccountTest, CreditCardAccountTest, BankAccountTest, ExpenseTest, MainPresenterTest, DebitDecisionTableBlackBoxTest, and ExpenseUseCaseFlowBlackBoxTest; D-41 verified) |
+| FR-03 Expense | UC-03 | `Expense`, `Account.canDebit` (D-27) | TC-FR03-01, TC-FR03-02, TC-FR03-03, TC-FR03-04, TC-FR03-05, TC-FR03-06, TC-FR03-07, TC-FR03-08, TC-FR03-09, TC-FR03-10, TC-FR03-11, TC-FR03-12, TC-FR03-13, TC-FR03-14 | Pass (TC-FR03-01 to TC-FR03-14 passed in CashAccountTest, CreditCardAccountTest, BankAccountTest, ExpenseTest, MainPresenterTest, DebitDecisionTableBlackBoxTest, and ExpenseUseCaseFlowBlackBoxTest; D-41 verified) |
 | FR-04 Transfer | UC-04 | `Transfer`, two-leg atomic write (D-23) | TC-FR04-01, TC-FR04-02, TC-FR04-03, TC-FR04-04, TC-FR04-05, TC-FR04-06, TC-FR04-07 | Pass (TC-FR04-01 to TC-FR04-07 passed in TransferTest, TransferAtomicityTest, JdbcSpikeTest, FinanceServiceTest, ExpenseUseCaseFlowBlackBoxTest, and RequirementAcceptanceBlackBoxTest) |
 | FR-05 Categories | UC-05 | `CategoryComponent` tree, archive flag (D-26) | TC-FR05-01, TC-FR05-02, TC-FR05-03, TC-FR05-04, TC-FR05-05, TC-FR05-06, TC-FR05-07 | Pass (TC-FR05-01 to TC-FR05-07 passed in CategoryTreeTest, TransactionFactoryTest, and RequirementAcceptanceBlackBoxTest) |
 | FR-06 Edit and delete | UC-02, UC-03, UC-04 | `FinanceService` edit and delete, `Account.apply` (D-23, D-39) | TC-FR06-01, TC-FR06-02, TC-FR06-03, TC-FR06-04, TC-FR06-05, TC-FR06-06, TC-FR06-07, TC-FR06-08, TC-FR06-09, TC-FR06-10, TC-FR06-11 | Pass (TC-FR06-01 to TC-FR06-11 passed in ExpenseTest, IncomeTest, FinanceServiceTest, TransactionContractTest, and RequirementAcceptanceBlackBoxTest; D-41 verified) |
 | FR-07 Balances and net worth | UC-01 | `Account.balance`, `FinanceService.netWorth`, derived balance (D-25) | TC-FR07-01, TC-FR07-02, TC-FR07-03, TC-FR07-04 | Pass (TC-FR07-01 to TC-FR07-04 passed in FinanceServiceTest, MainPresenterTest, and RequirementAcceptanceBlackBoxTest) |
 | FR-08 Search and filter | UC-10 | `TransactionQuery`, repository filters (D-38, D-44) | TC-FR08-01, TC-FR08-02, TC-FR08-03, TC-FR08-04 | Pass (TC-FR08-01 to TC-FR08-04 passed in TransactionRepositoryContractTest, MainPresenterTest, and RequirementAcceptanceBlackBoxTest) |
-| FR-09 Budgets | UC-06 | `Budget` | TC-FR09-01, TC-FR09-02, TC-FR09-03 | Pass (TC-FR09-01 to TC-FR09-03 passed in BudgetEvaluateTest and RequirementAcceptanceBlackBoxTest) |
-| FR-10 Budget alerts | UC-07 | `Budget.evaluate`, `BudgetListener`, `BudgetMonitor` (D-28, D-40) | TC-FR10-01, TC-FR10-02, TC-FR10-03, TC-FR10-04, TC-FR10-05, TC-FR10-06, TC-FR10-07, TC-FR10-10, TC-FR10-11, TC-FR10-12, TC-FR10-13, TC-FR10-14, TC-FR10-15 | Pass (TC-FR10-01 to TC-FR10-07, TC-FR10-10 to TC-FR10-15 passed in BudgetEvaluateTest, BudgetMonitorTest, BudgetAlertScenarioTest, MainPresenterTest, ExpenseUseCaseFlowBlackBoxTest, StateTransitionBlackBoxTest, and SystemScenarioTest) |
-| FR-11 Recurring transactions | UC-08 | `RecurringRule`, scheduler, clamping (D-29) | TC-FR11-01, TC-FR11-02, TC-FR11-03, TC-FR11-04, TC-FR11-05, TC-FR11-06, TC-FR11-07, TC-FR11-08, TC-FR11-09 | Pass (TC-FR11-01 to TC-FR11-09 passed in RecurringCatchUpTest, RecurringRuleTest, RequirementAcceptanceBlackBoxTest, and SystemScenarioTest) |
-| FR-12 Savings goals | UC-09 | `SavingsGoal`, `GoalContribution` (D-35) | TC-FR12-01, TC-FR12-02, TC-FR12-03, TC-FR12-04, TC-FR12-05, TC-FR12-06, TC-FR12-07 | Pass (TC-FR12-01 to TC-FR12-07 passed in SavingsGoalTest and StateTransitionBlackBoxTest) |
+| FR-09 Budgets | UC-06 | `Budget`, `BudgetRepository` (D-46) | TC-FR09-01, TC-FR09-02, TC-FR09-03, TC-FR09-04, TC-FR09-05, TC-FR09-06, TC-FR09-07, TC-FR09-08 | Pass (TC-FR09-01 to TC-FR09-03 passed in BudgetEvaluateTest and RequirementAcceptanceBlackBoxTest; TC-FR09-04 to TC-FR09-08 passed in BudgetRepositoryContractTest) |
+| FR-10 Budget alerts | UC-07 | `Budget.evaluate`, `BudgetListener`, `BudgetMonitor` (D-28, D-40, D-46) | TC-FR10-01, TC-FR10-02, TC-FR10-03, TC-FR10-04, TC-FR10-05, TC-FR10-06, TC-FR10-07, TC-FR10-08, TC-FR10-09, TC-FR10-10, TC-FR10-11, TC-FR10-12, TC-FR10-13, TC-FR10-14, TC-FR10-15, TC-FR10-16 | Pass (TC-FR10-01 to TC-FR10-15 passed in BudgetEvaluateTest, BudgetMonitorTest, BudgetAlertScenarioTest, MainPresenterTest, ExpenseUseCaseFlowBlackBoxTest, StateTransitionBlackBoxTest, and SystemScenarioTest; TC-FR10-16 passed in BudgetRestartAlertTest) |
+| FR-11 Recurring transactions | UC-08 | `RecurringRule`, scheduler, clamping (D-29) | TC-FR11-01, TC-FR11-02, TC-FR11-03, TC-FR11-04, TC-FR11-05, TC-FR11-06, TC-FR11-07, TC-FR11-08, TC-FR11-09 | Partially verified: domain only, not reachable from service or UI (TC-FR11-01 to TC-FR11-09 pass covering domain rules, Schedule clamping and RecurringGenerator in RecurringCatchUpTest, RecurringRuleTest, RequirementAcceptanceBlackBoxTest, and SystemScenarioTest; facade methods, persistence, and UI not implemented; D-47) |
+| FR-12 Savings goals | UC-09 | `SavingsGoal`, `GoalContribution` (D-35) | TC-FR12-01, TC-FR12-02, TC-FR12-03, TC-FR12-04, TC-FR12-05, TC-FR12-06, TC-FR12-07 | Partially verified: domain only, not reachable from service or UI (TC-FR12-01 to TC-FR12-07 pass covering domain progress calculation, goal contribution tracking, and Active/Achieved lifecycle in SavingsGoalTest and StateTransitionBlackBoxTest; facade methods, persistence, and UI not implemented; D-47) |
 | FR-13 Monthly summary | UC-10 | `MonthlySummaryReport` | TC-FR13-01, TC-FR13-02, TC-FR13-03 | Pass (TC-FR13-01, TC-FR13-02 passed in MonthlySummaryReportTest; TC-FR13-03 passed in RequirementAcceptanceBlackBoxTest) |
 | FR-14 Category breakdown | UC-10 | `CategoryBreakdownReport` | TC-FR14-01, TC-FR14-02, TC-FR14-03 | Pass (TC-FR14-01, TC-FR14-02 passed in CategoryBreakdownReportTest; TC-FR14-03 passed in RequirementAcceptanceBlackBoxTest) |
 | FR-15 Cash-flow trend | UC-10 | `CashFlowReport` | TC-FR15-01, TC-FR15-02 | Pass (TC-FR15-01 passed in CashFlowReportTest; TC-FR15-02 passed in RequirementAcceptanceBlackBoxTest) |
 | FR-16 CSV export | UC-11 | `Exporter` (CSV), two-leg export (D-23, D-30, D-37, D-44) | TC-FR16-01, TC-FR16-02, TC-FR16-03, TC-FR16-04, TC-FR16-05, TC-FR16-06 | Pass (TC-FR16-01 to TC-FR16-06 passed in CsvRoundTripTest, CsvImporterTest, and RequirementAcceptanceBlackBoxTest) |
 | FR-17 CSV import | UC-11 | `CsvImporter`, duplicate detection, row skip (D-30, D-37) | TC-FR17-01, TC-FR17-02, TC-FR17-03 | Pass (TC-FR17-01, TC-FR17-02 passed in CsvImporterTest; TC-FR17-03 passed in RequirementAcceptanceBlackBoxTest) |
-| FR-18 Persistence | all | JDBC repositories, schema PRAGMA (D-23, D-25, D-44) | TC-FR18-01, TC-FR18-02, TC-FR18-03, TC-FR18-04, TC-FR18-05, TC-FR18-06, TC-FR18-07, TC-FR18-08 | Pass (TC-FR18-01 to TC-FR18-03 passed in TransferAtomicityTest and JdbcSpikeTest; TC-FR18-05 passed in RequirementAcceptanceBlackBoxTest; TC-FR18-06 and TC-FR18-08 passed in SystemScenarioTest; TC-FR18-07 passed in MainTest) |
+| FR-18 Persistence | all | JDBC repositories, schema PRAGMA (D-23, D-25, D-44, D-46, D-47) | TC-FR18-01, TC-FR18-02, TC-FR18-03, TC-FR18-04, TC-FR18-05, TC-FR18-06, TC-FR18-07, TC-FR18-08, TC-FR18-09, TC-FR18-10 | Partially verified (accounts, categories, transactions and budgets persist; goals and recurring rules are not persisted because they cannot yet be created; TC-FR18-01 to TC-FR18-03, TC-FR18-05 to TC-FR18-10 passed in TransferAtomicityTest, JdbcSpikeTest, RequirementAcceptanceBlackBoxTest, SystemScenarioTest, MainTest, RestartPersistenceCheckTest, and MainBudgetRestartTest; D-46, D-47) |
 | FR-19 Validation | all | `ValidationException`, `Money` | TC-FR19-01, TC-FR19-02, TC-FR19-03, TC-FR19-04, TC-FR19-05, TC-FR19-06, TC-FR19-07, TC-FR19-08, TC-FR19-09, TC-FR19-10, TC-FR19-11, TC-FR19-12, TC-FR19-13, TC-FR19-14 | Pass (TC-FR19-01 to TC-FR19-14 passed in MoneyTest, FinanceServiceTest, MainPresenterTest, TransactionFactoryTest, TransactionContractTest, ExpenseUseCaseFlowBlackBoxTest, and RequirementAcceptanceBlackBoxTest) |
 | FR-20 Backup and restore | UC-12 | `BackupService` | TC-FR20-01 | Deferred (Could item, not implemented; single-user offline SQLite database file can be copied manually) |
+
+*Note: `MainPresenterTest.topLevelExceptionHandlerCatchesUnexpectedExceptions` supports D-13 and D-40 top-level error routing and is left unmapped in the requirement matrix.*
 
 ## 6. Measured values
 
@@ -201,7 +203,7 @@ Fill from commands at the end of each sprint. Leave a cell empty until it has be
 
 | Metric | How to measure | Latest value | Date |
 |---|---|---|---|
-| Tests run and passed | `mvn test` summary | 372 run, 372 passed, 0 failed | 2026-11-15 |
+| Tests run and passed | `mvn test` summary | 384 run, 384 passed, 0 failed | 2026-11-15 |
 | Domain line coverage | JaCoCo report | 96.1% (672/699 lines; SavingsGoal 59/64, GoalContribution 8/8, Contribution 9/9, Budget 36/36, RecurringRule 43/44, Schedule 50/52, BudgetStatus 4/4, Money 74/76, Transaction 47/47, Transfer 42/42, TransactionFactory 59/59, Account 23/23, CashAccount 22/25, BankAccount 22/25, CreditCardAccount 27/31, Income 14/14, Expense 14/14, CategoryComponent 42/46, Category 15/16, CategoryGroup 35/37, InsufficientFundsException 4/4, PiemsException 4/4, ValidationException 4/4, RecordNotFoundException 4/4, PersistenceException 4/4, GoalStatus 3/3, Schedule.Frequency 4/4) | 2026-11-15 |
 | Domain branch coverage | JaCoCo report | 91.3% (337/369 branches; SavingsGoal 26/30, Schedule 29/37, Budget 26/26, RecurringRule 25/26, Money 36/40, TransactionFactory 37/38, CategoryComponent 23/28, Transfer 23/28, Transaction 34/34, CategoryGroup 15/18, CreditCardAccount 10/10, CashAccount 8/8, BankAccount 8/8, Income 12/12, Expense 12/12, Account 4/4, Category 5/6, GoalContribution 2/2, Contribution 2/2) | 2026-11-15 |
 | Package cycles and instability | Metrics script | 0 cycles; domain I=0.000, repository I=0.333, report I=0.500, service I=0.500, ui I=0.667, ui.swing I=1.000, app I=1.000 | 2026-11-15 |
@@ -213,10 +215,16 @@ Fill from commands at the end of each sprint. Leave a cell empty until it has be
 
 Record honestly anything not done or only discussed, with the reason.
 
+### Known Gaps at Sprint 5 Completion (Tag v1.0, Final Release):
+1. **Backup, Restore & Migration (FR-20, NFR-10):** Deferred (Could items, not implemented in v1.0; manual SQLite file copy; step 5.5 not scheduled).
+2. **Reachability & Persistence for Recurring Rules and Savings Goals (FR-11, FR-12, FR-18):** Recurring transactions (`RecurringRule`, `RecurringGenerator`) and savings goals (`SavingsGoal`, `GoalContribution`) are verified at domain and calculation level only. They lack `FinanceService` facade methods, persistence repositories, and UI controls. Consequently, they are not reachable from the service facade or UI, and cannot be persisted across restarts. In FR-18, accounts, categories, transactions, and budgets persist across restart (D-46); goals and recurring rules are not persisted because they cannot yet be created through the service. Formally deferred under Decision D-47.
+3. **Multi-OS Execution Matrix (NFR-06):** Partially verified: Windows only locally; Linux and macOS CI matrix configured in `.github/workflows/ci.yml`.
+4. **User Acceptance Trial (NFR-04):** Detailed protocol and evaluation sheet created in `audit/acceptance-checklist.md`; validation trial pending participant execution.
+
 ### Known Gaps at Sprint 4 Completion (Tag v0.9):
 1. **Backup, Restore & Migration (FR-20, NFR-10):** Deferred (Could items, not implemented in v1.0; manual SQLite file copy; step 5.5 not scheduled). In Step 6.4, S6 backup/restore and older-schema checks were formally recorded as "blocked: FR-20 and NFR-10 not implemented" (`audit/test-results.md`).
 2. **User Acceptance Trial (NFR-04):** Detailed protocol and evaluation sheet created in `audit/acceptance-checklist.md`; validation trial pending participant execution.
-3. **SQLite Persistence for Budgets and Goals:** Active budgets and savings goals persist in memory (`BudgetMonitor`, `SavingsGoal`); persistent schema tables exist in `Schema.java`; dedicated JDBC repository implementations not built in v1.0.
+3. **Reachability & Persistence for Recurring Rules and Savings Goals (FR-11, FR-12, FR-18):** Recurring transactions (`RecurringRule`, `RecurringGenerator`) and savings goals (`SavingsGoal`, `GoalContribution`) are verified at domain and calculation level only. They currently lack `FinanceService` facade methods, persistence repositories, and UI controls. Consequently, they are not reachable from the service facade or UI, and cannot be persisted across restarts. In FR-18, accounts, categories, transactions, and budgets persist across restart (D-46); goals and recurring rules are not persisted because they cannot yet be created through the service. Formally deferred under Decision D-47.
 4. **Multi-OS Execution Matrix (NFR-06):** Partially verified: Windows only; Linux and macOS CI matrix not run.
 
 ### Known Gaps at Sprint 3 Completion (Tag v0.3):

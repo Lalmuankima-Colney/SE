@@ -41,7 +41,9 @@ import piems.report.ReportStrategy;
 import piems.report.TextExporter;
 import piems.report.TransactionExportRow;
 import piems.repository.AccountRepository;
+import piems.repository.BudgetRepository;
 import piems.repository.CategoryRepository;
+import piems.repository.InMemoryBudgetRepository;
 import piems.repository.TransactionQuery;
 import piems.repository.TransactionRecord;
 import piems.repository.TransactionRepository;
@@ -58,12 +60,65 @@ public class FinanceService {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final BudgetRepository budgetRepository;
     private final Clock clock;
     private final BudgetMonitor budgetMonitor;
     private final Map<String, ReportStrategy> reportStrategies = new ConcurrentHashMap<>();
 
     /**
-     * Constructs a FinanceService with repository dependencies and default BudgetMonitor.
+     * Constructs a FinanceService with full repository dependencies (production wiring, D-46).
+     *
+     * @param accountRepository     account persistence repository
+     * @param categoryRepository    category persistence repository
+     * @param transactionRepository transaction persistence repository
+     * @param budgetRepository      budget persistence repository
+     * @param clock                 clock provider for deterministic dates
+     */
+    public FinanceService(
+            AccountRepository accountRepository,
+            CategoryRepository categoryRepository,
+            TransactionRepository transactionRepository,
+            BudgetRepository budgetRepository,
+            Clock clock
+    ) {
+        this(accountRepository, categoryRepository, transactionRepository,
+                budgetRepository, clock, new BudgetMonitor(clock));
+    }
+
+    /**
+     * Constructs a FinanceService with full dependencies including an injected BudgetMonitor (D-46).
+     *
+     * @param accountRepository     account persistence repository
+     * @param categoryRepository    category persistence repository
+     * @param transactionRepository transaction persistence repository
+     * @param budgetRepository      budget persistence repository
+     * @param clock                 clock provider for deterministic dates
+     * @param budgetMonitor         budget monitoring subject for alert notifications
+     */
+    public FinanceService(
+            AccountRepository accountRepository,
+            CategoryRepository categoryRepository,
+            TransactionRepository transactionRepository,
+            BudgetRepository budgetRepository,
+            Clock clock,
+            BudgetMonitor budgetMonitor
+    ) {
+        this.accountRepository = Objects.requireNonNull(accountRepository, "accountRepository cannot be null");
+        this.categoryRepository = Objects.requireNonNull(categoryRepository, "categoryRepository cannot be null");
+        this.transactionRepository = Objects.requireNonNull(
+                transactionRepository, "transactionRepository cannot be null");
+        this.budgetRepository = Objects.requireNonNull(budgetRepository, "budgetRepository cannot be null");
+        this.clock = Objects.requireNonNull(clock, "clock cannot be null");
+        this.budgetMonitor = Objects.requireNonNull(budgetMonitor, "budgetMonitor cannot be null");
+        registerReportStrategy(new MonthlySummaryReport());
+        registerReportStrategy(new CategoryBreakdownReport());
+        registerReportStrategy(new CashFlowReport());
+        preloadBudgets();
+    }
+
+    /**
+     * Test convenience constructor defaulting budget repository to in-memory store.
+     * Restricted to tests; production wiring must supply BudgetRepository (D-46).
      *
      * @param accountRepository     account persistence repository
      * @param categoryRepository    category persistence repository
@@ -76,11 +131,13 @@ public class FinanceService {
             TransactionRepository transactionRepository,
             Clock clock
     ) {
-        this(accountRepository, categoryRepository, transactionRepository, clock, new BudgetMonitor(clock));
+        this(accountRepository, categoryRepository, transactionRepository,
+                new InMemoryBudgetRepository(), clock, new BudgetMonitor(clock));
     }
 
     /**
-     * Constructs a FinanceService with full dependencies including an injected BudgetMonitor.
+     * Test convenience constructor with custom BudgetMonitor and in-memory budget repository.
+     * Restricted to tests; production wiring must supply BudgetRepository (D-46).
      *
      * @param accountRepository     account persistence repository
      * @param categoryRepository    category persistence repository
@@ -95,15 +152,8 @@ public class FinanceService {
             Clock clock,
             BudgetMonitor budgetMonitor
     ) {
-        this.accountRepository = Objects.requireNonNull(accountRepository, "accountRepository cannot be null");
-        this.categoryRepository = Objects.requireNonNull(categoryRepository, "categoryRepository cannot be null");
-        this.transactionRepository = Objects.requireNonNull(
-                transactionRepository, "transactionRepository cannot be null");
-        this.clock = Objects.requireNonNull(clock, "clock cannot be null");
-        this.budgetMonitor = Objects.requireNonNull(budgetMonitor, "budgetMonitor cannot be null");
-        registerReportStrategy(new MonthlySummaryReport());
-        registerReportStrategy(new CategoryBreakdownReport());
-        registerReportStrategy(new CashFlowReport());
+        this(accountRepository, categoryRepository, transactionRepository,
+                new InMemoryBudgetRepository(), clock, budgetMonitor);
     }
 
     /**
@@ -701,15 +751,20 @@ public class FinanceService {
      * @param limit spending limit (must be strictly positive)
      * @return created Budget
      * @throws ValidationException if a budget already exists for this category/month
+     * @throws PersistenceException if saving budget fails
      */
     public Budget setBudget(CategoryComponent category, YearMonth month, Money limit)
-            throws ValidationException {
+            throws ValidationException, PersistenceException {
         Objects.requireNonNull(category, "Category cannot be null");
         Objects.requireNonNull(month, "Month cannot be null");
         validatePositiveAmount(limit);
-        Budget budget = new Budget(category, month, limit);
-        budgetMonitor.registerBudget(budget);
-        return budget;
+        if (budgetMonitor.getBudget(category, month).isPresent()) {
+            throw new ValidationException(
+                    "A budget already exists for category '" + category.name() + "' in " + month);
+        }
+        Budget saved = budgetRepository.save(new Budget(category, month, limit));
+        budgetMonitor.registerBudget(saved);
+        return saved;
     }
 
     /**
@@ -721,12 +776,32 @@ public class FinanceService {
      * @return created Budget
      * @throws ValidationException if category is archived or duplicate budget exists
      * @throws RecordNotFoundException if category does not exist
-     * @throws PersistenceException if querying category fails
+     * @throws PersistenceException if querying category or persisting budget fails
      */
     public Budget setBudget(long categoryId, YearMonth month, Money limit)
             throws ValidationException, RecordNotFoundException, PersistenceException {
         CategoryComponent category = getCategory(categoryId);
         return setBudget(category, month, limit);
+    }
+
+    /**
+     * Lists all persisted budgets.
+     *
+     * @return list of budgets
+     * @throws PersistenceException if querying fails
+     */
+    public List<Budget> listBudgets() throws PersistenceException {
+        return budgetRepository.findAll();
+    }
+
+    private void preloadBudgets() {
+        try {
+            for (Budget b : budgetRepository.findAll()) {
+                budgetMonitor.registerBudget(b);
+            }
+        } catch (PersistenceException | ValidationException ignored) {
+            // Decision D-46: Preload registers persisted budgets; lastNotifiedStatus starts at OK per session.
+        }
     }
 
     /**

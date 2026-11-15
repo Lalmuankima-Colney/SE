@@ -11,7 +11,7 @@ Put this file at `docs/DECISIONS.md`.
 
 ## Index
 
-Total decisions: 44 (D-01 through D-44).
+Total decisions: 47 (D-01 through D-47).
 
 | ID | Title | Status | Area |
 |---|---|---|---|
@@ -59,6 +59,9 @@ Total decisions: 44 (D-01 through D-44).
 | D-42 | Black-box test derivation from SRS acceptance criteria, decision tables, and state models | Accepted | Testing |
 | D-43 | System scenarios S1 to S6 verification, 10k-transaction benchmarking, and database robustness | Accepted | Testing |
 | D-44 | QA campaign hardening: CSV formula neutralization, LIKE escaping, network rule, CLI DB URL auto-prefix, and trial baseline seed | Accepted | Quality |
+| D-45 | Decoupling Documentation Consistency Test from Build Artifacts | Accepted | Quality |
+| D-46 | Budget SQLite Persistence, Preloading, and Restart Hysteresis Re-arming | Accepted | Persistence |
+| D-47 | Deferral of Service Reachability and Persistence for Recurring Rules and Savings Goals | Accepted | Scope |
 
 ## Entries
 
@@ -419,6 +422,30 @@ Total decisions: 44 (D-01 through D-44).
 - **Alternatives:** Blindly escaping all CSV columns (breaks date/amount parsing); throwing RuntimeException/ArithmeticException in reports (violates D-13); relying on manual SQLite CLI for trial data.
 - **Consequences / revisit when:** Verified via `TC-FR16-06` (`CsvRoundTripTest`), `TC-FR08-04` (`TransactionRepositoryContractTest`), `TC-NFR05-02` (`PackageDependencyTest`), `TC-FR18-07` (`MainTest`), and `TC-FR18-08` (`SystemScenarioTest`).
 - **Traces to:** FR-08, FR-16, FR-17, FR-18, NFR-04, NFR-05, Step 6.8.
+
+### D-45 Decoupling Documentation Consistency Test from Build Artifacts
+- **Date / status:** 2026-11-15 / Accepted (supersedes check 3 of D-34)
+- **Decision:** Remove `DocConsistencyTest.quotedTestCountMatchesSurefire` and replace hardcoded quoted test counts in `README.md` with instructions to run `./mvnw verify`. Retain the remaining two consistency checks: (1) requirement traceability against test specifications and test source code, and (2) decision section counts against index table rows and iteration logs.
+- **Why:** The Surefire report parsing check in D-34 introduced an execution-order dependency where running a clean build (`./mvnw clean test`) failed on fresh checkouts because test classes executing after `DocConsistencyTest` had not yet written their XML reports to `target/surefire-reports`. Unit tests must be self-contained and order-independent (D-16).
+- **Alternatives:** Parsing Java source files for `@Test` annotations (brittle with inheritance and parameterized tests); moving the test count assertion to a post-build shell script or integration test phase; keeping the Surefire check and requiring a two-pass build (rejected as non-standard).
+- **Consequences / revisit when:** Fresh repository checkouts build and pass all tests cleanly on the very first `./mvnw clean test` invocation without pre-existing target reports.
+- **Traces to:** D-16, D-21, D-34, NFR-07, Step 7.3, P-402.
+
+### D-46 Budget SQLite Persistence, Preloading, and Restart Hysteresis Re-arming
+- **Date / status:** 2026-11-15 / Accepted
+- **Decision:** Monthly category budgets are persisted to SQLite table `budgets` with a database-level unique constraint on `(category_id, month)` via `idx_budget_cat_month`. `BudgetRepository` is introduced with in-memory (`InMemoryBudgetRepository`) and SQLite JDBC (`JdbcBudgetRepository`) implementations. `Main` and all production wiring use the full `FinanceService` constructor injecting `BudgetRepository`. On initialization, `FinanceService` preloads all persisted budgets into `BudgetMonitor`, with `lastNotifiedStatus` initialized to `OK` (session-scoped hysteresis per D-28). Consequently, threshold alerts re-arm across application restarts, ensuring active warning and exceeded conditions are communicated in the new session. Because automatic schema migration (NFR-10) is deferred, existing pre-D-46 SQLite databases lacking the unique index are replaced by deleting existing development database files.
+- **Why:** Fulfills FR-18 (local persistence and state reload on restart) and FR-09 (duplicate budget prevention) without silent in-memory fallback. Preserves the decoupled Observer pattern (D-09) and clean boundary between persistent data and ephemeral alerting state.
+- **Alternatives:** Persisting `lastNotifiedStatus` in the `budgets` table (rejected to keep table schema aligned with SRS §3.4 and ensure threshold alerts re-surface to users on new sessions); allowing silent in-memory fallback in production when repository is omitted (rejected to guarantee strict fail-fast configuration).
+- **Consequences / revisit when:** Verified via `TC-FR09-04..08` (`BudgetRepositoryContractTest`), `TC-FR18-09` (`RestartPersistenceCheckTest`), `TC-FR18-10` (`MainBudgetRestartTest`), and `TC-FR10-16` (`BudgetRestartAlertTest`).
+- **Traces to:** FR-09, FR-10, FR-18, NFR-08, D-09, D-11, D-14, D-28.
+
+### D-47 Deferral of Service Reachability and Persistence for Recurring Rules and Savings Goals
+- **Date / status:** 2026-11-15 / Accepted
+- **Decision:** Recurring rules (FR-11) and savings goals (FR-12) are verified at the domain and calculation level only. `FinanceService` facade methods, persistence repositories, and UI controls for these features are deferred. Under FR-18 (local persistence), accounts, categories, transactions, and budgets persist across restart (D-46); goals and recurring rules are not persisted because they cannot yet be created through the service. FR-11 and FR-12 are designated "Partially verified: domain only, not reachable from service or UI" across `docs/SRS.md`, `docs/COVERAGE.md`, and `docs/TEST_PLAN.md`. FR-18 is designated "Partially verified".
+- **Why:** Domain calculation logic (`RecurringRule`, `Schedule`, `RecurringGenerator`, `SavingsGoal`, `GoalContribution`) is fully implemented and covered by unit, scenario, and black-box tests. However, full service facade operations, SQLite repository implementations, and UI screens for managing rules and goals were not scheduled in Sprints 1–4 and are deferred to post-v1.0 / future iterations. Accurately reflecting this status prevents misleading claims of full end-to-end verification.
+- **Alternatives:** Marking FR-11 and FR-12 as fully verified based on domain tests alone (rejected as misleading since the user and service cannot reach them); rushing partial facade implementations without UI or end-to-end tests (rejected as violating Definition of Done); marking them completely unverified (rejected because domain logic is rigorously tested).
+- **Consequences / revisit when:** Existing unit and scenario tests for `RecurringRule`, `RecurringGenerator`, and `SavingsGoal` remain in the test suite and pass cleanly. Revisit when implementing Part B (service facade methods, `GoalRepository`, `RecurringRuleRepository`, and corresponding UI controls).
+- **Traces to:** FR-11, FR-12, FR-18, D-11, D-35, D-46, COVERAGE.md Section 7, SRS §3.1.
 
 ## Template for a new entry
 

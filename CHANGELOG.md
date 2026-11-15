@@ -5,6 +5,34 @@ All notable changes to the PIEMS (Personal Income and Expense Management System)
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-11-15 (Tag v1.0: Final Release)
+
+### Added
+- **Budget Persistence & Restart Hysteresis (Phase G, Step 8.3 Part A, Decision D-46):**
+  - Contract interface `BudgetRepository` with `InMemoryBudgetRepository` and `JdbcBudgetRepository` implementations.
+  - Added unique index `idx_budget_cat_month` on SQLite table `budgets(category_id, month)` in `Schema.java` ensuring category-month uniqueness.
+  - Wired `BudgetRepository` into `SqliteDatabase` and `FinanceService`. Enforced full constructor injection in `Main.java` without fallback defaults.
+  - Added `FinanceService.preloadBudgets()` to populate `BudgetMonitor` upon application launch and reset session notification state.
+  - Fail-first proof `RestartPersistenceCheckTest` (TC-FR18-09) demonstrates budgets survive application restart.
+  - Production wiring restart test `MainBudgetRestartTest` (TC-FR18-10) and restart hysteresis re-arming test `BudgetRestartAlertTest` (TC-FR10-16).
+- **Project Limitations and Disciplines Applied (Phase G, Step 7.5):**
+  - Authored comprehensive report `docs/LIMITATIONS_AND_LESSONS.md` covering 12 project limitations and a two-column evidence comparison between findings discovered in this project (F-401, F-402, F-104, F-101, F-06..08, LIKE wildcards, CSV injection) and design risks avoided.
+  - Linked from `docs/COVERAGE.md` Unit 1 and `README.md`.
+- **Viva Voce Examination Preparation Sheets (Phase G, Step 7.4):**
+  - Created 6 core class viva sheets (`audit/viva/` for `money.md`, `account.md`, `transaction.md`, `budget.md`, `report-strategy.md`, `finance-service.md`) and navigation index `index.md` with 10 technical defense questions each, citing verified metrics and source locations.
+  - Risk R9 mitigated pending viva rehearsal by each team member.
+- **Build and Run Guide (Appendix B in README.md):**
+  - Added comprehensive platform-specific build and run instructions for Windows (PowerShell) and macOS (Terminal), covering test execution, Swing GUI launch, interactive console UI, custom SQLite database paths, executable JAR execution, and JaCoCo coverage reports.
+
+### Changed
+- **Documentation Status Synchronization (Step 8.3 /sync-docs, Decision D-47):**
+  - Aligned statuses across `docs/SRS.md`, `docs/COVERAGE.md`, and `docs/TEST_PLAN.md`: FR-11 (recurring rules) and FR-12 (savings goals) set to "Partially verified: domain only, not reachable from service or UI"; FR-18 set to "Partially verified" (accounts, categories, transactions, and budgets persist across restart; goals and recurring rules deferred under Decision D-47).
+  - Main application entry point `Main.java` strictly uses full constructor injection with no silent in-memory fallback.
+
+### Deferred
+- **Backup, Restore & Migration (FR-20, NFR-10):** Deferred (Could items, not implemented in v1.0; manual SQLite file copy; step 5.5 not scheduled).
+- **Service Reachability for Recurring Rules & Goals (FR-11, FR-12):** Deferred under Decision D-47.
+
 ## [0.9.0] - 2026-11-15 (Tag v0.9: Sprint 4 QA Campaign & Hardening)
 
 ### Added

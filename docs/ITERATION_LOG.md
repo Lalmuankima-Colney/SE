@@ -57,7 +57,7 @@ After sprint 1, compare these hours with the COCOMO, function-point and story-po
 - **Dates:** 2026-11-13 (in progress)
 - **Goal:** Requirements baseline, architecture decisions, risk spike, and initial project infrastructure.
 - **Planned items:** SRS inspection, Gate A1 design alignment, test plan mapping, risk register rescoring, CI and build setup.
-- **Completed items:** Steps 1.1 to 1.7 completed; Gate A1 closed (Q-001 to Q-015); Gate A2 passed; SRS bumped to v0.2; DECISIONS.md updated with D-23 to D-33; TEST_PLAN.md and COVERAGE.md filled with 51 concrete test IDs; RISKS.md updated with R11 to R16; Step 2.1 completed: Maven project skeleton (`pom.xml`, `.mvn/`, `mvnw`, `mvnw.cmd`, `.github/workflows/ci.yml`, `.gitignore`, 6 `package-info.java`, `SmokeTest.java`); Step 2.2 completed: `Money` value object and `MoneyTest` (`TC-NFR01-01`, `TC-FR19-01`); Step 2.3 completed: Persistence spike (`Schema.java`, `JdbcTransactionRepository.java`, `TransactionRecord.java`, `PiemsException.java`, `PersistenceException.java`, `JdbcSpikeTest.java`, `audit/spike-notes.md`, `TC-FR18-02`, `TC-FR18-03`, `TC-FR04-02`, `TC-FR04-03`, `TC-NFR03-01`); Step 2.4 completed: Package architectural script (`scripts/CheckPackages.java`, `scripts/check-packages`, `scripts/check-packages.cmd`, `src/test/resources/package-violation/`, `PackageDependencyTest.java`, `TC-NFR07-01`); Step 2.5 completed: Mermaid UML diagrams (`class-domain.mmd`, `package.mmd`, `state-goal.mmd`, `state-budget.mmd`, `audit/diagram-questions.md`); Step 2.6 completed: CRC cards (`docs/diagrams/crc.md`, `DiagramSyntaxTest.java`).
+- **Completed items:** Steps 1.1 to 1.7 completed; Gate A1 closed (Q-001 to Q-015); Gate A2 passed; SRS bumped to v0.2; DECISIONS.md updated with D-23 to D-33; TEST_PLAN.md and COVERAGE.md filled with 51 concrete test IDs; RISKS.md updated with R11 to R16; Step 2.1 completed: Maven project skeleton (`pom.xml`, `.mvn/`, `mvnw`, `mvnw.cmd`, `.github/workflows/ci.yml`, `.gitignore`, 6 `package-info.java`, `SmokeTest.java`); Step 2.2 completed: `Money` value object and `MoneyTest` (`TC-NFR01-01`, `TC-FR19-01`); Step 2.3 completed: Persistence spike (`Schema.java`, `JdbcTransactionRepository.java`, `TransactionRecord.java`, `PiemsException.java`, `PersistenceException.java`, `JdbcSpikeTest.java`, `audit/spike-notes.md`, `TC-FR18-02`, `TC-FR18-03`, `TC-FR04-02`, `TC-FR04-03`, `TC-NFR03-01`); Step 2.4 completed: Package architectural script (`scripts/CheckPackages.java`, `scripts/check-packages`, `scripts/check-packages.cmd`, `src/test/resources/package-violation/`, `PackageDependencyTest.java`, `TC-NFR07-01`); Step 2.5 completed: Mermaid UML diagrams (`class-domain.mmd`, `package.mmd`, `state-goal.mmd`, `state-budget.mmd`, `docs/diagrams/questions.md`); Step 2.6 completed: CRC cards (`docs/diagrams/crc.md`, `DiagramSyntaxTest.java`).
 - **Not completed and why:** GATE B review and walking skeleton verification scheduled next.
 - **Hours (planned / actual):** 14 (Requirements/SRS) + 2 (Build skeleton) + 2 (Money domain) + 2 (Persistence spike) + 1 (Package check script) + 2 (UML diagrams) + 1 (CRC cards) / 20
 - **Decisions made (IDs in `docs/DECISIONS.md`):** D-01 through D-33 (D-02, D-05 Accepted; D-12 superseded by D-23; D-31 Accepted; D-32, D-33 Proposed)
@@ -111,11 +111,68 @@ After sprint 1, compare these hours with the COCOMO, function-point and story-po
 - **Completed items:** Step 6.1 completed: Domain coverage gaps audited (`audit/2026-11-15-coverage-gaps/coverage-gaps.md`, `00-STATE.md`). Identified 4 classes below thresholds (`TransactionFactory` line 72.9%, `Transaction` branch 58.8%, `Expense` branch 66.7%, `Income` branch 66.7%). Step 6.2 completed: White-box testing, branch gap closure, and defensive no-op account semantics (`BudgetEvaluateBranchTest`, `BudgetMonitorBranchTest`, `CsvImporterBranchTest`, `ExpenseNoOpBranchTest`, `IncomeNoOpBranchTest`; 327 tests passed; D-41 recorded; bytecode-level PITest documented as constrained by JVM runtime version 69 in `audit/2026-11-15-campaign/final-report.md`). Step 6.3 completed: Black-box QA pass derived from SRS acceptance criteria, IEEE 829 debit decision table R1–R5, state transition tables (SavingsGoal, Budget), and UC-03 flows (32 new black-box tests added: `DebitDecisionTableBlackBoxTest` 5, `ExpenseUseCaseFlowBlackBoxTest` 5, `StateTransitionBlackBoxTest` 5, `RequirementAcceptanceBlackBoxTest` 17; findings F-06, F-07, F-08 recorded in `audit/2026-11-15-blackbox/findings.md` and `docs/SRS.md`; D-42 recorded). Step 6.4 completed: System scenarios S1 to S6 automated and benchmarked against temp SQLite databases (`SystemScenarioTest` 8 tests: S1 hand-calculated month, S2 observer alerts, S3 fault-injection transfer rollback, S4 3-month recurring catch-up, S5 10k transactions benchmark meeting latency targets, S6 restart persistence check and corrupt DB safe rejection; D-43 recorded; `audit/test-results.md` created). Step 6.6 completed: Security quick pass (`audit/2026-11-15-security/security-review.md`). Step 6.7 completed: Acceptance trial protocol and checklist (`audit/acceptance-checklist.md`; validation trial pending). Step 6.5 completed: Consolidated QA campaign report (`audit/2026-11-15-campaign/final-report.md`). Step 6.8 completed: QA hardening proposals implemented (P-301 CheckPackages network rule, P-303 SQL LIKE wildcard escaping, P-304 CSV formula neutralization and lossless round-trip, P-308 CLI DB URL auto-prefix, P-309 trial baseline seed script and derived balance test; P-305 deferred; D-44 recorded).
 - **Not completed and why:** S6 backup/restore and older-schema checks: FR-20 and NFR-10 Deferred (Could items, not implemented in v1.0; step 5.5 not scheduled).
 - **Hours (planned / actual):** not provided / approx. 18 h (team estimate)
-- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 44 (D-01 through D-44; D-41 Accepted in Step 6.2, D-42 Accepted in Step 6.3, D-43 Accepted in Step 6.4, D-44 Accepted in Step 6.8)
-- **Risks changed (IDs in `docs/RISKS.md`):** None (R1 to R16 tracked; R8 test gaps addressed through QA campaign expansion to 372 tests).
-- **Tests (from tool output):** 372 run, 372 passed, 0 failed across 48 test classes (`.\mvnw.cmd -B verify`; JaCoCo Domain line coverage: 96.1% [672/699], branch coverage: 91.3% [337/369]; JaCoCo Overall line coverage: 81.8% [2391/2924], branch coverage: 71.9% [946/1315]; 0 Checkstyle violations; 0 package cycles).
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 45 (D-01 through D-45; D-41 Accepted in Step 6.2, D-42 Accepted in Step 6.3, D-43 Accepted in Step 6.4, D-44 Accepted in Step 6.8, D-45 Accepted in Step 7.3)
+- **Risks changed (IDs in `docs/RISKS.md`):** None (R1 to R16 tracked; R8 test gaps addressed through QA campaign expansion to 371 tests).
+- **Tests (from tool output):** 371 run, 371 passed, 0 failed across 48 test classes (`.\mvnw.cmd -B verify`; JaCoCo Domain line coverage: 96.1% [672/699], branch coverage: 91.3% [337/369]; JaCoCo Overall line coverage: 81.8% [2391/2924], branch coverage: 71.9% [946/1315]; 0 Checkstyle violations; 0 package cycles).
 - **Retrospective:** Keep: reading each agent plan before approving and writing tests first · Stop: letting plans contain invented numbers or build production code during a QA step · Try: answering open questions earlier and checking test IDs for collisions before writing tests.
 - **Release tag and changelog entry:** Tag `v0.9` (`CHANGELOG.md`).
+
+### Step 8.3 Part A – Budget Persistence & Restart Hysteresis (FR-09, FR-18)
+- **Dates:** 2026-11-15 (Completed)
+- **Goal:** Make category budgets persist across application restart via SQLite table `budgets`, add `BudgetRepository` contracts and implementations (`InMemoryBudgetRepository`, `JdbcBudgetRepository`), enforce unique `(category_id, month)` index, mandate full constructor in `Main`, preload budgets into `BudgetMonitor`, and re-arm session alerts.
+- **Completed items:**
+  - `BudgetRepository.java` contract interface created.
+  - `InMemoryBudgetRepository.java` and `JdbcBudgetRepository.java` implemented with unique constraint enforcement.
+  - `Schema.java` updated with unique index `idx_budget_cat_month` on `budgets(category_id, month)`.
+  - `SqliteDatabase.java` updated to instantiate and expose `budgetRepository()`.
+  - `FinanceService.java` wired with `BudgetRepository`, full constructor used in `Main.java`, and `preloadBudgets()` added.
+  - Fail-first proof `RestartPersistenceCheckTest` (TC-FR18-09) demonstrated failing, then passing.
+  - Production wiring restart test `MainBudgetRestartTest` (TC-FR18-10) verified.
+  - Budget alert re-arming test `BudgetRestartAlertTest` (TC-FR10-16) verified.
+  - Contract test suite `BudgetRepositoryContractTest` (TC-FR09-04..08) verified against both in-memory and JDBC repositories.
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 46 (D-01 through D-46; D-46 Accepted in Step 8.3 Part A)
+
+### Step 8.3 /sync-docs – Status Alignment & Scope Deferral (FR-11, FR-12, FR-18, D-47)
+- **Dates:** 2026-11-15 (Completed)
+- **Goal:** Align requirement statuses across SRS, COVERAGE, and TEST_PLAN to reflect that FR-11 (recurring rules) and FR-12 (savings goals) are verified at domain level only and not reachable from service or UI, and FR-18 is partially verified (accounts, categories, transactions, budgets persist; goals and recurring rules cannot yet be created).
+- **Completed items:**
+  - `docs/SRS.md` updated: FR-11 and FR-12 marked "Partially verified: domain only, not reachable from service or UI"; FR-18 marked "Partially verified"; version 0.8 change-history row added.
+  - `docs/COVERAGE.md` updated: Section 5 traceability table and Section 7 known gaps aligned with D-47.
+  - `docs/TEST_PLAN.md` updated: Section 3 and Section 9.1 test case descriptions annotated with domain-only coverage and D-47 deferral.
+  - `docs/DECISIONS.md` updated: Decision D-47 recorded and indexed.
+  - `README.md` updated: SRS version 0.8 and decision count 47 reflected.
+  - Zero changes to `src/`.
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 47 (D-01 through D-47; D-47 Accepted)
+
+### Step 7.5 – Limitations, Disciplines Applied & Lessons Draft
+- **Dates:** 2026-11-15 (Completed)
+- **Goal:** Draft comprehensive report sections for Project Limitations and Disciplines Applied (and Problems Each Prevented) mapped to syllabus units, attributing facts exclusively to `docs/RISKS.md`, `docs/ITERATION_LOG.md`, `audit/` reports, and `docs/DECISIONS.md`.
+- **Completed items:**
+  - `docs/LIMITATIONS_AND_LESSONS.md` authored with 12 factual project limitations and two-column discipline analysis contrasting concrete project findings against design risks avoided.
+  - `docs/COVERAGE.md` Unit 1 Topic "Role of software engineering" updated from Planned to Pass referencing `docs/LIMITATIONS_AND_LESSONS.md`.
+  - `README.md` updated with `docs/LIMITATIONS_AND_LESSONS.md` in documentation index.
+  - Reconciled technical questions: non-negative `Money` with explicit `CreditCardAccount.outstandingDebt`, `java -version` (Oracle JDK 25.0.1 runtime with bytecode version 69 vs `pom.xml` target 17), `Money.DEFAULT_CURRENCY` (INR constant), and 1,128 line count for `FinanceService.java`.
+  - Zero edits to `src/`.
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 47 (D-01 through D-47; no new decisions)
+
+### Sprint 5 (week 8) – Final Release v1.0 & Project Finish
+- **Dates:** 2026-11-15 to 2026-11-15 (Completed)
+- **Goal:** Phase G Finish: budget persistence hardening (Step 8.3 Part A), documentation synchronization (FR-11, FR-12, FR-18, D-47), limitations and lessons report (Step 7.5), viva preparation sheets (Step 7.4), build & run guide Appendix B, and release v1.0.
+- **Planned items:** Steps 7.1, 7.2, 7.3, 7.4, 7.5, 8.3 Part A.
+- **Completed items:**
+  - Budget persistence across restarts via `BudgetRepository`, `JdbcBudgetRepository`, `InMemoryBudgetRepository`, unique index `idx_budget_cat_month`, and `Main` constructor wiring (D-46).
+  - Traceability and doc consistency sync (`docs/SRS.md`, `docs/COVERAGE.md`, `docs/TEST_PLAN.md`) aligning FR-11, FR-12, and FR-18 under D-47.
+  - Project Limitations and Disciplines Applied report (`docs/LIMITATIONS_AND_LESSONS.md`) covering 12 project limitations and two-column evidence comparison.
+  - Viva preparation sheets for 6 core classes (`audit/viva/index.md`, `money.md`, `account.md`, `transaction.md`, `budget.md`, `report-strategy.md`, `finance-service.md`).
+  - Appendix B: Build and Run Guide in `README.md` with dedicated PowerShell and macOS commands.
+  - Final Sprint Review, release tag `v1.0`, and changelog `[1.0.0]`.
+- **Not completed and why:** FR-20 & NFR-10 (Backup/Restore/Migration) deferred as Could; reachability of recurring rules (FR-11) and savings goals (FR-12) deferred under D-47; multi-OS CI matrix (NFR-06) verified on Windows locally.
+- **Hours (planned / actual):** not provided / approx. 18 h (team estimate)
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 47 (D-01 through D-47; D-46 Accepted in Step 8.3 Part A, D-47 Accepted in Step 8.3 /sync-docs)
+- **Risks changed (IDs in `docs/RISKS.md`):** R9 marked as mitigated, pending viva rehearsal by each owner.
+- **Tests (from tool output):** 384 run, 384 passed, 0 failed (`MainBudgetRestartTest` 1, `MainTest` 1, `DiagramSyntaxTest` 5, `DocConsistencyTest` 2, `BankAccountTest` 11, `BudgetEvaluateTest` 13, `CashAccountTest` 13, `CategoryTreeTest` 12, `CreditCardAccountTest` 13, `DebitDecisionTableBlackBoxTest` 5, `ExpenseTest` 19, `IncomeTest` 19, `MoneyTest` 14, `RecurringRuleTest` 9, `SavingsGoalTest` 11, `ScheduleTest` 12, `StateTransitionBlackBoxTest` 5, `TransactionFactoryTest` 21, `TransactionTest` 18, `TransferTest` 18, `BudgetEvaluateBranchTest` 5, `BudgetMonitorBranchTest` 5, `CsvImporterBranchTest` 4, `ExpenseNoOpBranchTest` 3, `IncomeNoOpBranchTest` 3, `CashFlowReportTest` 3, `CategoryBreakdownReportTest` 5, `CsvExporterTest` 6, `MonthlySummaryReportTest` 4, `NewStrategyNeedsNoServiceChangeTest` 1, `InMemoryAccountRepositoryTest` 7, `InMemoryBudgetRepositoryTest` 5, `InMemoryCategoryRepositoryTest` 6, `InMemoryTransactionRepositoryTest` 13, `JdbcAccountRepositoryTest` 7, `JdbcBudgetRepositoryTest` 5, `JdbcCategoryRepositoryTest` 6, `JdbcSpikeTest` 4, `JdbcTransactionRepositoryTest` 13, `RestartPersistenceCheckTest` 1, `TransferAtomicityTest` 3, `BudgetAlertScenarioTest` 3, `BudgetMonitorTest` 10, `BudgetRestartAlertTest` 1, `CsvImporterTest` 9, `CsvRoundTripTest` 3, `ExpenseUseCaseFlowBlackBoxTest` 5, `FinanceServiceTest` 19, `RecurringCatchUpTest` 3, `RequirementAcceptanceBlackBoxTest` 17, `SystemScenarioTest` 8, `SmokeTest` 1, `ConsoleScriptTest` 5, `MainPresenterTest` 9; JaCoCo Domain line coverage: 96.1% [672/699], branch coverage: 91.3% [337/369]; JaCoCo Overall line coverage: 82.0% [2515/3066], branch coverage: 71.8% [982/1367]; 0 Checkstyle violations; 0 package cycles).
+- **Retrospective:** Keep: test-first fail-first persistence checks (`RestartPersistenceCheckTest`), strict decoupling of UI from database through `FinanceService`, and continuous documentation consistency checks · Stop: leaving domain models unpersisted until late in the development cycle · Try: early end-to-end integration testing for all domain components in future projects.
+- **Release tag and changelog entry:** Tag `v1.0` (`CHANGELOG.md`).
 
 ### Template for each further sprint
 - **Sprint / dates:**

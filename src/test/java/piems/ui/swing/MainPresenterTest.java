@@ -140,7 +140,7 @@ class MainPresenterTest {
     }
 
     @Test
-    @DisplayName("TC-NFR04-02: handleUncaughtException routes unexpected errors to view error handler")
+    @DisplayName("handleUncaughtException routes unexpected errors to view error handler (supporting D-13, D-40)")
     void topLevelExceptionHandlerCatchesUnexpectedExceptions() {
         presenter.handleUncaughtException(new RuntimeException("Simulated unexpected failure"));
 

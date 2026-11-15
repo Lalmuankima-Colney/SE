@@ -47,12 +47,13 @@ The codebase strictly adheres to the following architectural rules:
 ## 4. Documentation Index
 
 All core documentation lives in the `docs/` directory:
-- [docs/SRS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/SRS.md) – Software Requirements Specification (v0.2, IEEE 29148 structure).
-- [docs/DECISIONS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/DECISIONS.md) – Architectural Decision Records (D-01 through D-44).
+- [docs/SRS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/SRS.md) – Software Requirements Specification (v0.8, IEEE 29148 structure).
+- [docs/DECISIONS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/DECISIONS.md) – Architectural Decision Records (D-01 through D-47).
 - [docs/COVERAGE.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/COVERAGE.md) – Requirements Traceability Matrix and Syllabus Topic Coverage.
 - [docs/TEST_PLAN.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/TEST_PLAN.md) – Verification and Validation Test Plan (IEEE 829 structure).
 - [docs/RISKS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/RISKS.md) – Project Risk Register (R1 through R16).
 - [docs/ITERATION_LOG.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/ITERATION_LOG.md) – Sprint Logs, Work Breakdown Structure (214 h), and Estimation Cross-Checks.
+- [docs/LIMITATIONS_AND_LESSONS.md](file:///c:/Users/muank/Desktop/Sem%203/SE/PROJECT%20SE/docs/LIMITATIONS_AND_LESSONS.md) – Project Limitations and Disciplines Applied (Syllabus Unit 1).
 - `docs/diagrams/` – 4 Mermaid diagrams (`class-domain.mmd`, `package.mmd`, `state-goal.mmd`, `state-budget.mmd`) and 6 CRC cards (`crc.md`) covering domain structure, component responsibilities, package layering, and state lifecycles.
 
 ---
@@ -84,8 +85,123 @@ scripts\check-packages.cmd      # On Windows
 
 ## 6. Project Status
 
-- **Phase:** Phase G: Finish (Week 8).
-- **Gates:** Gate A1 Closed; Gate A2 Passed; Gate B Passed; Gate D Certified (all 13 Must functional requirements verified and passed); tags `v0.1`, `v0.2`, `v0.3`, and `v0.9` released.
-- **Verification:** `./mvnw -B verify` passing (`BUILD SUCCESS`, 372 tests passed, 0 Checkstyle violations).
-- **Documentation & Consistency:** Automated consistency verification via `DocConsistencyTest` (Decision D-21, D-34); traceability test IDs verified against test specifications and source annotations; decision count (44) verified across index and log; test counts dynamically verified against Surefire reports.
-- **Next Milestone:** Phase G: Finish (Step 7.2 Traceability Completion; FR-20 and NFR-10 Deferred).
+- **Phase:** Phase G: Finish (Week 8) – Complete.
+- **Gates:** Gate A1 Closed; Gate A2 Passed; Gate B Passed; Gate D Certified (all 13 Must functional requirements verified and passed); tags `v0.1`, `v0.2`, `v0.3`, `v0.9`, and final release `v1.0` released.
+- **Verification:** `./mvnw -B verify` passing (`BUILD SUCCESS`, 384 tests passing, 0 failures, 0 Checkstyle violations, 0 package cycles).
+- **Documentation & Consistency:** Automated consistency verification via `DocConsistencyTest` (Decision D-21, D-34, D-45); traceability test IDs verified against test specifications and source annotations; decision count (47) verified across index and log; test counts decoupled from transient build artifacts per D-45.
+- **Final Release:** Release v1.0 tagged and published.
+
+---
+
+## Appendix B: Build and Run Guide
+
+This appendix lists the steps to install the tools, then build, test and run the application. Sections B.1 and B.2 are separate: B.1 is for Windows (PowerShell) and B.2 is for macOS (Terminal). Every build and run command must be run from the project root, the folder that contains `pom.xml`.
+
+**Prerequisites:** JDK 17 or newer and Apache Maven 3.8 or newer. No external database server is needed, because SQLite is embedded. Check the installation first:
+
+| Check | Windows (PowerShell) | macOS (Terminal) |
+|---|---|---|
+| Java version | `java -version` | `java -version` |
+| Maven version | `mvn -v` | `mvn -v` |
+
+If `mvn -v` says "not recognized" (Windows) or "command not found" (macOS), install Maven as shown below.
+
+### B.1 Windows (PowerShell)
+
+#### Install Maven, Option A: Chocolatey (quickest)
+1. Open PowerShell as Administrator (right-click, then **Run as administrator**).
+2. Check whether Chocolatey exists:
+   ```powershell
+   choco -v
+   ```
+   If that also says "not recognized", install Chocolatey first using the one-line command on [chocolatey.org/install](https://chocolatey.org/install).
+3. Install Maven:
+   ```powershell
+   choco install maven -y
+   ```
+4. Close PowerShell and open a new window. PATH changes only apply to new windows.
+5. Check:
+   ```powershell
+   mvn -v
+   ```
+
+#### Build, test and run (from the project root):
+```powershell
+# Navigate to the folder containing pom.xml
+cd "C:\path\to\PROJECT SE"
+
+# Compile and run all 384 automated tests
+mvn test
+
+# Run the Swing GUI (recommended)
+mvn -q exec:java "-Dexec.args=--gui"
+
+# Run the interactive console UI (creates or connects to embedded SQLite piems.db)
+mvn -q exec:java
+
+# Run the console UI with custom SQLite persistence
+mvn -q exec:java "-Dexec.args=mydata.db"
+
+# Run the Swing GUI with custom SQLite persistence
+mvn -q exec:java "-Dexec.args=--gui mydata.db"
+
+# Build the executable JAR, then run it
+mvn package -DskipTests
+java -jar target\piems-0.1.0-SNAPSHOT.jar --gui
+
+# Open the coverage report (after mvn test)
+start target\site\jacoco\index.html
+```
+
+> [!NOTE]
+> In PowerShell the `-Dexec.args=...` argument must be wrapped in double quotes (e.g. `"-Dexec.args=--gui"`), otherwise PowerShell splits it at the dot.
+
+### B.2 macOS (Terminal)
+
+#### Install Maven with Homebrew:
+```bash
+# If brew is missing, install Homebrew first from https://brew.sh
+brew install maven
+mvn -v
+```
+If Java 17 or newer is missing, install OpenJDK first:
+```bash
+brew install openjdk@17
+```
+
+#### Build, test and run (from the project root):
+```bash
+# Navigate to the folder containing pom.xml
+cd /path/to/PROJECT\ SE
+
+# Compile and run all 384 automated tests
+mvn test
+
+# Run the Swing GUI (recommended)
+mvn -q exec:java -Dexec.args="--gui"
+
+# Run the interactive console UI (creates or connects to embedded SQLite piems.db)
+mvn -q exec:java
+
+# Run the console UI with custom SQLite persistence
+mvn -q exec:java -Dexec.args="mydata.db"
+
+# Run the Swing GUI with custom SQLite persistence
+mvn -q exec:java -Dexec.args="--gui mydata.db"
+
+# Build the executable JAR, then run it
+mvn package -DskipTests
+java -jar target/piems-0.1.0-SNAPSHOT.jar --gui
+
+# Open the coverage report (after mvn test)
+open target/site/jacoco/index.html
+```
+
+### B.3 Run modes
+
+| Mode / argument | What it starts |
+|---|---|
+| `--gui` | Swing desktop GUI (recommended) with accounts, live budget alerts, transactions, and reports |
+| *(no arguments)* | Interactive console UI (numbered options 1–11) using embedded SQLite database `piems.db` |
+| `<filename.db>` | Console UI storing data in the specified custom SQLite database file (e.g. `mydata.db`) |
+| `--gui <filename.db>` | Swing desktop GUI storing data in the specified custom SQLite database file |

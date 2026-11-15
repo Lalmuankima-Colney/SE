@@ -12,26 +12,21 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
- * Automated documentation consistency and drift verification test (Decision D-21, D-34).
+ * Automated documentation consistency and drift verification test (Decision D-21, D-34, D-45).
  *
- * <p>Enforces exactly three checks:
+ * <p>Enforces two canonical document consistency checks:
  * <ol>
  *   <li>FR test IDs in COVERAGE.md Section 5 exist in TEST_PLAN.md, and verified FRs appear in test sources.</li>
  *   <li>DECISIONS.md entries equal index rows and the count quoted in ITERATION_LOG.md.</li>
- *   <li>The test count quoted in README.md equals the Surefire total read from target/surefire-reports.</li>
  * </ol>
+ * (Surefire test count verification was decoupled per Decision D-45 to avoid build-order dependencies).
  * </p>
  */
 class DocConsistencyTest {
-
-    private static final int THIS_CLASS_TEST_COUNT = 3;
 
     @Test
     @DisplayName("D-21/D-34 Check 1: COVERAGE FR test IDs exist in TEST_PLAN and verified FRs have test in source")
@@ -81,24 +76,6 @@ class DocConsistencyTest {
                 .as("Heading count (%d) must equal count quoted in ITERATION_LOG (%d)",
                         headingCount, quotedLogCount)
                 .isEqualTo(quotedLogCount);
-    }
-
-    @Test
-    @DisplayName("D-21/D-34 Check 3: Test count quoted in README matches Surefire execution output")
-    void quotedTestCountMatchesSurefire() throws Exception {
-        Path readmePath = Path.of("README.md");
-        int quotedCount = extractQuotedReadmeTestCount(readmePath);
-
-        Path surefireDir = Path.of("target", "surefire-reports");
-        assertThat(Files.isDirectory(surefireDir))
-                .as("Surefire reports directory must exist: %s", surefireDir)
-                .isTrue();
-
-        int surefireTotal = calculateSurefireTestTotal(surefireDir);
-        assertThat(quotedCount)
-                .as("Quoted test count in README (%d) must match Surefire total (%d)",
-                        quotedCount, surefireTotal)
-                .isEqualTo(surefireTotal);
     }
 
     private List<CoverageRequirement> parseCoverageSection5(Path coveragePath) throws IOException {
@@ -170,40 +147,6 @@ class DocConsistencyTest {
             return count;
         }
         throw new IllegalStateException("Could not find 'Total decisions: <N>' in " + logPath);
-    }
-
-    private int extractQuotedReadmeTestCount(Path readmePath) throws IOException {
-        String content = Files.readString(readmePath);
-        Matcher matcher = Pattern.compile("(\\d+)\\s+tests passed").matcher(content);
-        if (matcher.find()) {
-            return Integer.parseInt(matcher.group(1));
-        }
-        throw new IllegalStateException("Could not find '<N> tests passed' in " + readmePath);
-    }
-
-    private int calculateSurefireTestTotal(Path surefireDir) throws Exception {
-        int total = 0;
-        try (Stream<Path> stream = Files.list(surefireDir)) {
-            List<Path> xmlFiles = stream
-                    .filter(p -> p.getFileName().toString().startsWith("TEST-")
-                            && p.getFileName().toString().endsWith(".xml"))
-                    .toList();
-            for (Path xmlFile : xmlFiles) {
-                if (xmlFile.getFileName().toString().contains("DocConsistencyTest")) {
-                    continue; // Skip on-disk report as it reflects a previous run while this class executes
-                }
-                total += parseXmlTestCount(xmlFile);
-            }
-            total += THIS_CLASS_TEST_COUNT;
-        }
-        return total;
-    }
-
-    private int parseXmlTestCount(Path xmlFile) throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        Document doc = dbf.newDocumentBuilder().parse(xmlFile.toFile());
-        Element root = doc.getDocumentElement();
-        return Integer.parseInt(root.getAttribute("tests"));
     }
 
     private record CoverageRequirement(String id, List<String> testIds, boolean isVerified) {

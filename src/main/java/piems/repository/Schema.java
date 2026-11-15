@@ -119,5 +119,6 @@ public final class Schema {
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(date);");
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_tx_link ON transactions(transfer_link_id);");
         stmt.execute("CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_id);");
+        stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_budget_cat_month ON budgets(category_id, month);");
     }
 }

@@ -4,7 +4,7 @@ Put this file at `docs/SRS.md`. Structure follows IEEE 29148. Items marked **TBD
 
 | Field | Value |
 |---|---|
-| Version | 0.5 |
+| Version | 0.7 |
 | Date | 2026-11-15 |
 | Authors | Team (Domain Lead, Requirements Analyst, UI Lead, Persistence Lead) |
 | Status | Approved (Must requirements frozen per D-04; Gate A1 closed) |
@@ -61,40 +61,40 @@ Priorities use MoSCoW. Status values: Proposed, Approved, Implemented, Verified,
 
 | ID | The system shall | Priority | Acceptance criterion | Status |
 |---|---|---|---|---|
-| FR-01 | Allow the user to create, edit and archive accounts of type cash, bank or credit card with an opening balance | Must | An archived account keeps its history and rejects new transactions | Approved |
-| FR-02 | Record income | Must | Balance rises by the amount; an amount of zero or less is rejected | Approved |
-| FR-03 | Record expense | Must | Balance falls by the amount; bank and cash accounts prohibit overdraft (rejection with InsufficientFundsException); credit card balances may fall below zero up to credit_limit_minor (D-27) | Approved |
-| FR-04 | Transfer money between two accounts | Must | Stored as two linked leg rows written atomically inside a single database transaction with a shared transfer_link_id (D-23); net worth is unchanged; edit and delete act on both legs together atomically; excluded from monthly summary (FR-13) and category breakdown (FR-14) | Approved |
-| FR-05 | Manage categories and subcategories | Must | A category in use cannot be deleted (reassign or soft-delete via archived flag; archived categories reject new transactions per D-26) | Approved |
-| FR-06 | Edit and delete transactions | Must | Balances stay consistent after every edit or delete; transfers edit or delete both legs atomically (D-23) | Approved |
-| FR-07 | Show account balances and net worth | Must | Net worth equals the sum of account balances; account balances are dynamically derived from opening balance plus transactions (D-25) | Approved |
-| FR-08 | Search and filter transactions by date, category, account and text | Should | Filters combine with AND; text search matches literal characters escaping SQL LIKE wildcards (%, _, \\) (D-11, D-44, P-303) | Proposed |
-| FR-09 | Allow a monthly budget per category | Must | At most one budget per category per month | Approved |
-| FR-10 | Alert at 80% and 100% of a budget | Must | Each threshold alerts once per crossing; BudgetMonitor resets to OK if spending drops below 80%, allowing re-alerts on subsequent re-crossing (D-28) | Approved |
-| FR-11 | Generate recurring transactions (daily, weekly, monthly) | Should | Generated exactly once per due date, including catch-up after downtime; rules scheduled on the 29th–31st clamp to the last valid day in shorter months (D-29) | Proposed |
-| FR-12 | Track savings goals with progress | Should | Status changes from Active to Achieved when contributions reach the target (Overdue and Cancelled deferred to post-v1.0 per Q-008, D-35) | Approved |
-| FR-13 | Produce a monthly summary (income, expense, savings rate) | Must | Totals match the underlying transactions; transfer legs excluded; savings rate displays "N/A" (or "-") when monthly income is zero (Q-013) | Approved |
-| FR-14 | Produce a category breakdown report | Must | Category shares sum to exactly 100.0% using Largest Remainder Method (Hare-Niemeyer); transfer legs excluded (D-23, Q-014) | Approved |
-| FR-15 | Produce a multi-month cash-flow trend | Should | One row per month in the range | Proposed |
-| FR-16 | Export transactions and reports to CSV | Should | An export can be re-imported without loss; transfers exported as one row (kind=TRANSFER, to_account) (D-23, D-30); formula characters on free-text columns neutralized losslessly (D-44, P-304) | Proposed |
-| FR-17 | Import a CSV statement with duplicate detection | Could | Re-importing the same file adds nothing; bad rows or unknown entities skipped and reported with line numbers without aborting valid rows (D-30) | Proposed |
-| FR-18 | Persist all data locally and reload it on start | Must | State is identical after a restart | Approved |
-| FR-19 | Validate all input and show clear messages | Must | No invalid value reaches the domain model | Approved |
+| FR-01 | Allow the user to create, edit and archive accounts of type cash, bank or credit card with an opening balance | Must | An archived account keeps its history and rejects new transactions | Verified |
+| FR-02 | Record income | Must | Balance rises by the amount; an amount of zero or less is rejected | Verified |
+| FR-03 | Record expense | Must | Balance falls by the amount; bank and cash accounts prohibit overdraft (rejection with InsufficientFundsException); credit card balances may fall below zero up to credit_limit_minor (D-27) | Verified |
+| FR-04 | Transfer money between two accounts | Must | Stored as two linked leg rows written atomically inside a single database transaction with a shared transfer_link_id (D-23); net worth is unchanged; edit and delete act on both legs together atomically; excluded from monthly summary (FR-13) and category breakdown (FR-14) | Verified |
+| FR-05 | Manage categories and subcategories | Must | A category in use cannot be deleted (reassign or soft-delete via archived flag; archived categories reject new transactions per D-26) | Verified |
+| FR-06 | Edit and delete transactions | Must | Balances stay consistent after every edit or delete; transfers edit or delete both legs atomically (D-23) | Verified |
+| FR-07 | Show account balances and net worth | Must | Net worth equals the sum of account balances; account balances are dynamically derived from opening balance plus transactions (D-25) | Verified |
+| FR-08 | Search and filter transactions by date, category, account and text | Should | Filters combine with AND; text search matches literal characters escaping SQL LIKE wildcards (%, _, \\) (D-11, D-44, P-303) | Verified |
+| FR-09 | Allow a monthly budget per category | Must | At most one budget per category per month | Verified |
+| FR-10 | Alert at 80% and 100% of a budget | Must | Each threshold alerts once per crossing; BudgetMonitor resets to OK if spending drops below 80%, allowing re-alerts on subsequent re-crossing (D-28) | Verified |
+| FR-11 | Generate recurring transactions (daily, weekly, monthly) | Should | Generated exactly once per due date, including catch-up after downtime; rules scheduled on the 29th–31st clamp to the last valid day in shorter months (D-29) | Partially verified: domain only, not reachable from service or UI |
+| FR-12 | Track savings goals with progress | Should | Status changes from Active to Achieved when contributions reach the target (Overdue and Cancelled deferred to post-v1.0 per Q-008, D-35) | Partially verified: domain only, not reachable from service or UI |
+| FR-13 | Produce a monthly summary (income, expense, savings rate) | Must | Totals match the underlying transactions; transfer legs excluded; savings rate displays "N/A" (or "-") when monthly income is zero (Q-013) | Verified |
+| FR-14 | Produce a category breakdown report | Must | Category shares sum to exactly 100.0% using Largest Remainder Method (Hare-Niemeyer); transfer legs excluded (D-23, Q-014) | Verified |
+| FR-15 | Produce a multi-month cash-flow trend | Should | One row per month in the range | Verified |
+| FR-16 | Export transactions and reports to CSV | Should | An export can be re-imported without loss; transfers exported as one row (kind=TRANSFER, to_account) (D-23, D-30); formula characters on free-text columns neutralized losslessly (D-44, P-304) | Verified |
+| FR-17 | Import a CSV statement with duplicate detection | Could | Re-importing the same file adds nothing; bad rows or unknown entities skipped and reported with line numbers without aborting valid rows (D-30) | Verified |
+| FR-18 | Persist all data locally and reload it on start | Must | State is identical after a restart for accounts, categories, transactions and budgets (D-46); goals and recurring rules not persisted because they cannot yet be created (D-47) | Partially verified |
+| FR-19 | Validate all input and show clear messages | Must | No invalid value reaches the domain model | Verified |
 | FR-20 | Back up and restore the database file | Could | Restore reproduces the backed-up state | Deferred |
 
 ### 3.2 Non-functional requirements
 
 | ID | Category | The system shall | Measure / verification | Status |
 |---|---|---|---|---|
-| NFR-01 | Accuracy | Handle money exactly, without floating point | Summing 1,000 entries of 0.10 gives exactly 100.00 | Proposed |
-| NFR-02 | Performance | List 10,000 transactions in under 1 s and produce a monthly report in under 2 s | Timed system test | Proposed |
-| NFR-03 | Reliability | Leave no partial transaction after a failed write | Database transaction plus fault-injection test on transfer | Proposed |
-| NFR-04 | Usability | Let a new user add an expense with at most 4 inputs | Trial with 3 people | Proposed |
-| NFR-05 | Privacy | Keep data local and make no network calls | Code review and dependency check | Proposed |
-| NFR-06 | Portability | Run on Windows, Linux and macOS with JDK 17 | Build and test on two operating systems if possible | Proposed |
-| NFR-07 | Maintainability | Have no package cycles, methods of at most 30 lines, domain line coverage of at least 80%, and domain branch coverage of at least 70% | Metrics script and JaCoCo (Q-012) | Proposed |
-| NFR-08 | Testability | Keep domain logic independent of the GUI and the database | Domain tests use in-memory repositories | Proposed |
-| NFR-09 | Modifiability | Allow a new report or account type by touching at most 2 existing classes | Design review | Proposed |
+| NFR-01 | Accuracy | Handle money exactly, without floating point | Summing 1,000 entries of 0.10 gives exactly 100.00 | Verified |
+| NFR-02 | Performance | List 10,000 transactions in under 1 s and produce a monthly report in under 2 s | Timed system test | Verified |
+| NFR-03 | Reliability | Leave no partial transaction after a failed write | Database transaction plus fault-injection test on transfer | Verified |
+| NFR-04 | Usability | Let a new user add an expense with at most 4 inputs | Trial with 3 people | automated input-count test passes; user trial pending |
+| NFR-05 | Privacy | Keep data local and make no network calls | Code review and dependency check | Verified |
+| NFR-06 | Portability | Run on Windows, Linux and macOS with JDK 17 | Build and test on two operating systems if possible | Partially verified |
+| NFR-07 | Maintainability | Have no package cycles, methods of at most 30 lines, domain line coverage of at least 80%, and domain branch coverage of at least 70% | Metrics script and JaCoCo (Q-012) | Verified |
+| NFR-08 | Testability | Keep domain logic independent of the GUI and the database | Domain tests use in-memory repositories | Verified |
+| NFR-09 | Modifiability | Allow a new report or account type by touching at most 2 existing classes | Design review | Verified |
 | NFR-10 | Recoverability | Make an automatic backup before a schema change | Migration test | Deferred |
 
 ### 3.3 External interface requirements
@@ -191,3 +191,6 @@ Review every requirement against: valid (needed by a stakeholder), consistent (n
 | 0.3 | 2026-11-15 | Step 6.3 Black-box QA findings F-06, F-07, F-08 resolved and closed (D-42); full requirement acceptance test matrix derived. | Sprint 4 QA Step 6.3 |
 | 0.4 | 2026-11-15 | Step 6.8 QA hardening: CSV formula trigger neutralization and lossless unescaping (FR-16, D-44, P-304); SQL LIKE wildcard escaping (FR-08, D-44, P-303); automated network isolation check (NFR-05, D-44, P-301); CLI database URL auto-prefix (FR-18, D-44, P-308); trial baseline seed script (P-309). | Sprint 4 QA Step 6.8 |
 | 0.5 | 2026-11-15 | FR-20 (Backup/restore) and NFR-10 (Schema migration backup) marked as Deferred (Could items, not implemented in v1.0; manual SQLite file copy; step 5.5 not scheduled). | Sprint 4 Review (Step 7.1) |
+| 0.6 | 2026-11-15 | Step 7.3 documentation consistency pass (P-405): requirement statuses in §3.1 and §3.2 updated to Verified where COVERAGE.md provides automated test evidence (FR-01 to FR-19, NFR-01 to NFR-05, NFR-07, NFR-09); NFR-06 marked Partially verified (Windows only); NFR-08 retained as Planned; FR-20 and NFR-10 retained as Deferred. | Step 7.3 Consistency Audit (P-405) |
+| 0.7 | 2026-11-15 | Step 7.2 traceability synchronization: NFR-08 marked Verified (TC-NFR08-01 passed in FinanceServiceTest; scripts/check-packages 0 JDBC/UI imports in domain/service); NFR-04 status clarified as 'automated input-count test passes; user trial pending'. | Step 7.2 Traceability Completion |
+| 0.8 | 2026-11-15 | Status alignment: FR-11 and FR-12 updated to 'Partially verified: domain only, not reachable from service or UI' (domain entities and calculations verified, but facade methods, persistence, and UI not implemented); FR-18 updated to 'Partially verified' (accounts, categories, transactions, and budgets persist across restart via D-46; goals and recurring rules not persisted because they cannot yet be created; D-47). | Step 8.3 Status Alignment (D-47) |

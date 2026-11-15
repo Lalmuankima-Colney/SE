@@ -28,7 +28,7 @@ import piems.repository.TransactionRepository;
 /**
  * Unit and integration tests for {@link FinanceService} (Decision D-05, D-14).
  *
- * <p>Traces to requirements UC-01 to UC-05, FR-01 through FR-07, and FR-19.</p>
+ * <p>Traces to requirements UC-01 to UC-05, FR-01 through FR-07, FR-19, and NFR-08.</p>
  */
 class FinanceServiceTest {
 
@@ -49,7 +49,7 @@ class FinanceServiceTest {
     }
 
     @Test
-    @DisplayName("TC-FR07-01: Net worth equals the sum of account derived balances")
+    @DisplayName("TC-FR07-01 / TC-NFR08-01: Net worth equals the sum of account derived balances")
     void netWorthEqualsSumOfBalances() throws Exception {
         Account wallet = service.createCashAccount("Wallet", Money.of("100.00"));
         Account bank = service.createBankAccount("Checking", Money.of("500.00"));
