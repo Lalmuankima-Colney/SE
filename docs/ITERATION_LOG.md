@@ -205,6 +205,20 @@ After sprint 1, compare these hours with the COCOMO, function-point and story-po
 - **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 49 (D-01 through D-49; D-49 Accepted)
 - **Tests (from tool output):** 400 run, 400 passed, 0 failed (`MainPresenterTest` 17, total suite 400 tests; 0 Checkstyle violations; 0 package cycles).
 
+### GUI Plan Step A: Diagnose and Fix Reset, Account, and Category (2026-11-16)
+- **Goal:** Diagnose and fix the three reported Swing GUI issues: non-working Reset (table sorter sort keys surviving reset and Clear Form not resetting account/balance), squeezed Account dropdown with font/glyph confusion, and Category dropdown populated with unusable/income options.
+- **Planned items:** Step A of `GUI_IMPLEMENTATION_PLAN.md`.
+- **Completed items:**
+  - Resolved Search & Filter `Reset`: cleared table sort keys (`sorter.setSortKeys(null)`) and table selection (`table.clearSelection()`).
+  - Resolved Record Expense `Clear Form`: reset `accountCombo` to default (index 0), updated `availableBalanceLabel`, and reset `budgetBadge`.
+  - Resolved form squeezing: replaced `GridLayout(7,2)` with `GridBagLayout`, expanding `accountCombo` from 101px to $\ge 190$px.
+  - Resolved Category options: filtered Record Expense `categoryCombo` to display only `EXPENSE` categories, eliminating inappropriate income categories from expense recording.
+  - Implemented combo selection retention: preserved active account and category IDs on reload across `setAccounts()` and `setCategories()`, guarded by `isUpdatingCombos`.
+  - Added 5 unit tests in `MainPresenterTest` (total 22 tests).
+- **Hours (planned / actual):** not provided / approx. 1 h (team estimate)
+- **Decisions made (IDs in `docs/DECISIONS.md`):** Total decisions: 50 (D-01 through D-50; D-50 Accepted)
+- **Tests (from tool output):** 405 run, 405 passed, 0 failed (`MainPresenterTest` 22, total suite 405 tests; 0 Checkstyle violations; 0 package cycles).
+
 ### Template for each further sprint
 - **Sprint / dates:**
 - **Goal:**

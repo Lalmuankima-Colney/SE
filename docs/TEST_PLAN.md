@@ -244,11 +244,12 @@ Fill from tool output at the end of each sprint.
 | Sprint 5 (Final Release, tag v1.0) | 384 | 384 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
 | Maintenance Step 8.1 (D-48) | 396 | 396 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
 | Maintenance Step 8.1 (D-49, Balances & Dialogs) | 400 | 400 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-15 |
+| GUI Step A (D-50, Reset & Combo Fixes) | 405 | 405 | 0 | 96.1% (Domain: 672/699) | 91.3% (Domain: 337/369) | 2026-11-16 |
 
-### Supporting Tests for Decision D-48 & D-49 (Unmapped in COVERAGE.md Section 5)
-These tests support Decisions D-48 and D-49 (GUI usability, demo data loader, name display, live balances, dialog creation, and form reset) and remain unmapped to specific functional requirements in COVERAGE.md Section 5 per traceability policy:
+### Supporting Tests for Decisions D-48, D-49 & D-50 (Unmapped in COVERAGE.md Section 5)
+These tests support Decisions D-48, D-49 and D-50 (GUI usability, demo data loader, name display, live balances, dialog creation, reset behavior, and combo layout/filtering) and remain unmapped to specific functional requirements in COVERAGE.md Section 5 per traceability policy:
 - `DemoDataLoaderTest`: 6 tests verifying accounts, categories, budget in WARNING, date clamping, all-or-nothing rollback atomicity, and non-empty refusal.
-- `MainPresenterTest`: 8 supporting tests verifying empty-state guidance on `addExpense`, demo load view refresh, demo load refusal, table model column names, account creation, category creation, form reset, and live balance/net worth initialization.
+- `MainPresenterTest`: 13 supporting tests verifying empty-state guidance on `addExpense`, demo load view refresh, demo load refusal, table model column names, account creation, category creation, form reset, live balance/net worth initialization, filter reset clearing sort keys/selection, form clear resetting account/balance, account selection retention, expense category filtering, and GridBagLayout combo width expansion.
 - `FinanceServiceTest`: 2 supporting tests verifying `TransactionView` name resolution across operations, transfer legs, and archived accounts/categories.
 
 ## 14. Defect log

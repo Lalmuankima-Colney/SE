@@ -88,8 +88,8 @@ scripts\check-packages.cmd      # On Windows
 
 - **Phase:** Phase G: Finish (Week 8) – Complete.
 - **Gates:** Gate A1 Closed; Gate A2 Passed; Gate B Passed; Gate D Certified (all 13 Must functional requirements verified and passed); tags `v0.1`, `v0.2`, `v0.3`, `v0.9`, and final release `v1.0` released.
-- **Verification:** `./mvnw -B verify` passing (`BUILD SUCCESS`, 384 tests passing, 0 failures, 0 Checkstyle violations, 0 package cycles).
-- **Documentation & Consistency:** Automated consistency verification via `DocConsistencyTest` (Decision D-21, D-34, D-45); traceability test IDs verified against test specifications and source annotations; decision count (47) verified across index and log; test counts decoupled from transient build artifacts per D-45.
+- **Verification:** `./mvnw -B verify` passing (`BUILD SUCCESS`, 405 tests passing, 0 failures, 0 Checkstyle violations, 0 package cycles).
+- **Documentation & Consistency:** Automated consistency verification via `DocConsistencyTest` (Decision D-21, D-34, D-45); traceability test IDs verified against test specifications and source annotations; decision count (50) verified across index and log; test counts decoupled from transient build artifacts per D-45.
 - **Final Release:** Release v1.0 tagged and published.
 
 ---

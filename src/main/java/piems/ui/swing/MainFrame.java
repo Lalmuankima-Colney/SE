@@ -1,10 +1,14 @@
 package piems.ui.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
@@ -35,7 +39,7 @@ import piems.service.TransactionView;
  * Main application window for the Swing graphical user interface.
  *
  * <p>Implements {@link MainView} with a two-pane layout: balance summary and expense recording form
- * on the left and sortable/filterable transaction table on the right (Decision D-40, D-49).</p>
+ * on the left and sortable/filterable transaction table on the right (Decision D-40, D-49, D-50).</p>
  */
 public class MainFrame extends JFrame implements MainView {
 
@@ -43,7 +47,7 @@ public class MainFrame extends JFrame implements MainView {
     private final JTable table = new JTable(tableModel);
     private final TableRowSorter<TransactionTableModel> sorter = new TableRowSorter<>(tableModel);
 
-    private final JLabel netWorthLabel = new JLabel("Net Worth: ₹0.00");
+    private final JLabel netWorthLabel = new JLabel("Net Worth: 0.00");
     private final DefaultListModel<String> balancesListModel = new DefaultListModel<>();
     private final JList<String> balancesList = new JList<>(balancesListModel);
     private final Map<Long, Money> accountBalanceCache = new HashMap<>();
@@ -72,6 +76,7 @@ public class MainFrame extends JFrame implements MainView {
     private final JButton loadDemoButton = new JButton("Load demo data");
     private final JProgressBar progressBar = new JProgressBar();
     private MainPresenter presenter;
+    private boolean isUpdatingCombos;
 
     /**
      * Constructs and arranges the main frame layout.
@@ -113,8 +118,9 @@ public class MainFrame extends JFrame implements MainView {
     }
 
     private JPanel buildExpenseForm() {
-        JPanel form = new JPanel(new GridLayout(7, 2, 4, 4));
+        JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(BorderFactory.createTitledBorder("Record Expense"));
+        GridBagConstraints c = new GridBagConstraints();
 
         JPanel accRow = new JPanel(new BorderLayout(4, 0));
         accRow.add(accountCombo, BorderLayout.CENTER);
@@ -128,21 +134,40 @@ public class MainFrame extends JFrame implements MainView {
         btnRow.add(addExpenseButton);
         btnRow.add(clearExpenseButton);
 
-        form.add(new JLabel("Account:"));
-        form.add(accRow);
-        form.add(new JLabel("Balance:"));
-        form.add(availableBalanceLabel);
-        form.add(new JLabel("Category:"));
-        form.add(catRow);
-        form.add(new JLabel("Amount:"));
-        form.add(amountField);
-        form.add(new JLabel("Date (yyyy-MM-dd):"));
-        form.add(dateField);
-        form.add(new JLabel("Note:"));
-        form.add(noteField);
-        form.add(new JLabel(""));
-        form.add(btnRow);
+        addFormField(form, c, 0, "Account:", accRow);
+        addFormField(form, c, 1, "Balance:", availableBalanceLabel);
+        addFormField(form, c, 2, "Category:", catRow);
+        addFormField(form, c, 3, "Amount:", amountField);
+        addFormField(form, c, 4, "Date (yyyy-MM-dd):", dateField);
+        addFormField(form, c, 5, "Note:", noteField);
+
+        c.gridx = 0;
+        c.gridy = 6;
+        c.gridwidth = 2;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(6, 4, 4, 4);
+        form.add(btnRow, c);
         return form;
+    }
+
+    private void addFormField(JPanel form, GridBagConstraints c, int row, String label, Component comp) {
+        c.gridwidth = 1;
+        c.gridx = 0;
+        c.gridy = row;
+        c.weightx = 0.0;
+        c.anchor = GridBagConstraints.LINE_START;
+        c.fill = GridBagConstraints.NONE;
+        c.insets = new Insets(3, 4, 3, 6);
+        form.add(new JLabel(label), c);
+
+        c.gridx = 1;
+        c.weightx = 1.0;
+        c.anchor = GridBagConstraints.LINE_START;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(3, 0, 3, 4);
+        form.add(comp, c);
     }
 
     private JPanel buildTablePanel() {
@@ -202,6 +227,9 @@ public class MainFrame extends JFrame implements MainView {
     }
 
     private void onAccountSelected() {
+        if (isUpdatingCombos) {
+            return;
+        }
         AccountItem item = (AccountItem) accountCombo.getSelectedItem();
         if (item == null || item.id() == null || item.id() == 0L) {
             availableBalanceLabel.setText("Available: -");
@@ -293,6 +321,8 @@ public class MainFrame extends JFrame implements MainView {
         if (filterCategoryCombo.getItemCount() > 0) {
             filterCategoryCombo.setSelectedIndex(0);
         }
+        sorter.setSortKeys(null);
+        table.clearSelection();
         if (presenter != null) {
             presenter.applyFilter(null, null, null, null, null);
             statusLabel.setText("Filters reset.");
@@ -300,7 +330,7 @@ public class MainFrame extends JFrame implements MainView {
     }
 
     private void onCategorySelected() {
-        if (presenter == null) {
+        if (isUpdatingCombos || presenter == null) {
             return;
         }
         CategoryItem cat = (CategoryItem) categoryCombo.getSelectedItem();
@@ -368,30 +398,78 @@ public class MainFrame extends JFrame implements MainView {
 
     @Override
     public void setAccounts(List<Account> accounts) {
-        accountCombo.removeAllItems();
-        filterAccountCombo.removeAllItems();
-        filterAccountCombo.addItem(new AccountItem(0L, "All Accounts"));
-        for (Account a : accounts) {
-            accountCombo.addItem(new AccountItem(a.id(), a.name()));
-            filterAccountCombo.addItem(new AccountItem(a.id(), a.name()));
+        Long selectedId = getSelectedAccountId();
+        isUpdatingCombos = true;
+        try {
+            accountCombo.removeAllItems();
+            filterAccountCombo.removeAllItems();
+            filterAccountCombo.addItem(new AccountItem(0L, "All Accounts"));
+            int toSelect = 0;
+            for (int i = 0; i < accounts.size(); i++) {
+                Account a = accounts.get(i);
+                accountCombo.addItem(new AccountItem(a.id(), a.name()));
+                filterAccountCombo.addItem(new AccountItem(a.id(), a.name()));
+                if (selectedId != null && selectedId.equals(a.id())) {
+                    toSelect = i;
+                }
+            }
+            if (accountCombo.getItemCount() > 0) {
+                accountCombo.setSelectedIndex(toSelect);
+            }
+        } finally {
+            isUpdatingCombos = false;
         }
         onAccountSelected();
     }
 
+    private Long getSelectedAccountId() {
+        AccountItem item = (AccountItem) accountCombo.getSelectedItem();
+        return (item != null) ? item.id() : null;
+    }
+
     @Override
     public void setCategories(List<CategoryComponent> categories) {
-        categoryCombo.removeAllItems();
-        filterCategoryCombo.removeAllItems();
-        categoryCombo.addItem(new CategoryItem(0L, "(None)"));
-        filterCategoryCombo.addItem(new CategoryItem(0L, "All Categories"));
-        for (CategoryComponent c : categories) {
-            populateCategoryHierarchy(c, "");
+        Long selectedId = getSelectedCategoryId();
+        isUpdatingCombos = true;
+        try {
+            categoryCombo.removeAllItems();
+            filterCategoryCombo.removeAllItems();
+            categoryCombo.addItem(new CategoryItem(0L, "(None)"));
+            filterCategoryCombo.addItem(new CategoryItem(0L, "All Categories"));
+            for (CategoryComponent c : categories) {
+                populateCategoryHierarchy(c, "");
+            }
+            restoreSelectedCategory(selectedId);
+        } finally {
+            isUpdatingCombos = false;
         }
+    }
+
+    private void restoreSelectedCategory(Long selectedId) {
+        if (selectedId == null || selectedId == 0L) {
+            categoryCombo.setSelectedIndex(0);
+            return;
+        }
+        for (int i = 0; i < categoryCombo.getItemCount(); i++) {
+            CategoryItem item = categoryCombo.getItemAt(i);
+            if (item != null && selectedId.equals(item.id())) {
+                categoryCombo.setSelectedIndex(i);
+                return;
+            }
+        }
+        categoryCombo.setSelectedIndex(0);
+    }
+
+    private Long getSelectedCategoryId() {
+        CategoryItem item = (CategoryItem) categoryCombo.getSelectedItem();
+        return (item != null) ? item.id() : null;
     }
 
     private void populateCategoryHierarchy(CategoryComponent comp, String prefix) {
         String displayName = prefix.isEmpty() ? comp.name() : prefix + " > " + comp.name();
-        categoryCombo.addItem(new CategoryItem(comp.id(), displayName));
+        if ("EXPENSE".equalsIgnoreCase(comp.kind())) {
+            categoryCombo.addItem(new CategoryItem(comp.id(), displayName));
+        }
         filterCategoryCombo.addItem(new CategoryItem(comp.id(), displayName));
         for (CategoryComponent child : comp.children()) {
             populateCategoryHierarchy(child, displayName);
@@ -418,9 +496,14 @@ public class MainFrame extends JFrame implements MainView {
         amountField.setText("");
         noteField.setText("");
         dateField.setText(LocalDate.now().toString());
+        if (accountCombo.getItemCount() > 0) {
+            accountCombo.setSelectedIndex(0);
+            onAccountSelected();
+        }
         if (categoryCombo.getItemCount() > 0) {
             categoryCombo.setSelectedIndex(0);
         }
+        budgetBadge.updateStatus("[NO BUDGET] Select category", null);
     }
 
     @Override

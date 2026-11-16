@@ -260,6 +260,106 @@ class MainPresenterTest {
         assertThat(fakeView.lastNetWorth).isEqualTo(Money.of("1000.00"));
     }
 
+    @Test
+    @DisplayName("D-50: Reset button in Search & Filter clears table sorter sort keys and selection")
+    void resetFilterClearsSortKeysAndSelection() throws Exception {
+        MainFrame frame = new MainFrame();
+        var sorterField = MainFrame.class.getDeclaredField("sorter");
+        sorterField.setAccessible(true);
+        var sorter = (javax.swing.table.TableRowSorter<?>) sorterField.get(frame);
+
+        var resetBtnField = MainFrame.class.getDeclaredField("resetButton");
+        resetBtnField.setAccessible(true);
+        var resetBtn = (javax.swing.JButton) resetBtnField.get(frame);
+
+        sorter.setSortKeys(List.of(new javax.swing.RowSorter.SortKey(0, javax.swing.SortOrder.DESCENDING)));
+        assertThat(sorter.getSortKeys()).isNotEmpty();
+
+        resetBtn.doClick();
+
+        assertThat(sorter.getSortKeys()).isNullOrEmpty();
+    }
+
+    @Test
+    @DisplayName("D-50: Clear Form button resets account selection to default and updates balance label")
+    void clearExpenseFormResetsAccountSelectionAndBalance() throws Exception {
+        MainFrame frame = new MainFrame();
+        frame.setAccounts(List.of(
+                new piems.domain.BankAccount(1L, "Checking", Money.of("1000.00"), false),
+                new piems.domain.BankAccount(2L, "Savings", Money.of("5000.00"), false)
+        ));
+        frame.showAccountBalances(List.of(
+                new AccountBalanceItem(1L, "Checking", "BANK", Money.of("1000.00")),
+                new AccountBalanceItem(2L, "Savings", "BANK", Money.of("5000.00"))
+        ), Money.of("6000.00"));
+
+        var accComboField = MainFrame.class.getDeclaredField("accountCombo");
+        accComboField.setAccessible(true);
+        var accCombo = (javax.swing.JComboBox<?>) accComboField.get(frame);
+
+        accCombo.setSelectedIndex(1);
+        assertThat(accCombo.getSelectedIndex()).isEqualTo(1);
+
+        frame.clearExpenseInputs();
+
+        assertThat(accCombo.getSelectedIndex()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("D-50: setAccounts retains currently selected account when reloaded")
+    void setAccountsRetainsCurrentlySelectedAccount() throws Exception {
+        MainFrame frame = new MainFrame();
+        Account acc1 = new piems.domain.BankAccount(1L, "Checking", Money.of("1000.00"), false);
+        Account acc2 = new piems.domain.BankAccount(2L, "Savings", Money.of("5000.00"), false);
+        frame.setAccounts(List.of(acc1, acc2));
+
+        var accComboField = MainFrame.class.getDeclaredField("accountCombo");
+        accComboField.setAccessible(true);
+        var accCombo = (javax.swing.JComboBox<?>) accComboField.get(frame);
+
+        accCombo.setSelectedIndex(1);
+        assertThat(accCombo.getSelectedIndex()).isEqualTo(1);
+
+        // Simulate refresh (e.g. after adding another account or reload)
+        Account acc3 = new piems.domain.CashAccount(3L, "Cash", Money.of("200.00"), false);
+        frame.setAccounts(List.of(acc1, acc2, acc3));
+
+        // Must still select acc2 (index 1), not be wiped to index 0!
+        assertThat(accCombo.getSelectedIndex()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("D-50: Record Expense category dropdown includes only EXPENSE categories")
+    void expenseFormCategoryComboExcludesIncomeCategories() throws Exception {
+        MainFrame frame = new MainFrame();
+        CategoryComponent exp = service.createCategory("Health", "EXPENSE", null);
+        CategoryComponent inc = service.createCategory("Salary", "INCOME", null);
+        frame.setCategories(List.of(exp, inc));
+
+        var catComboField = MainFrame.class.getDeclaredField("categoryCombo");
+        catComboField.setAccessible(true);
+        var catCombo = (javax.swing.JComboBox<?>) catComboField.get(frame);
+
+        // Expected: (None) + Health (2 items). Salary (INCOME) must not appear in expense form!
+        assertThat(catCombo.getItemCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("D-50: Account combo box has sufficient width (>150px) preventing label squeeze")
+    void layoutExpandsAccountComboWidth() throws Exception {
+        org.junit.jupiter.api.Assumptions.assumeFalse(java.awt.GraphicsEnvironment.isHeadless());
+        MainFrame frame = new MainFrame();
+        frame.pack();
+        frame.setSize(1040, 640);
+        frame.validate();
+
+        var accComboField = MainFrame.class.getDeclaredField("accountCombo");
+        accComboField.setAccessible(true);
+        var accCombo = (javax.swing.JComboBox<?>) accComboField.get(frame);
+
+        assertThat(accCombo.getWidth()).isGreaterThanOrEqualTo(160);
+    }
+
     private static class FakeMainView implements MainView {
         private List<Account> accounts = new ArrayList<>();
         private List<CategoryComponent> categories = new ArrayList<>();

@@ -11,7 +11,7 @@ Put this file at `docs/DECISIONS.md`.
 
 ## Index
 
-Total decisions: 47 (D-01 through D-47).
+Total decisions: 50 (D-01 through D-50).
 
 | ID | Title | Status | Area |
 |---|---|---|---|
@@ -64,6 +64,7 @@ Total decisions: 47 (D-01 through D-47).
 | D-47 | Deferral of Service Reachability and Persistence for Recurring Rules and Savings Goals | Accepted | Scope |
 | D-48 | GUI empty-state validation, demo data loader, and transaction table name resolution | Accepted | UI |
 | D-49 | GUI live account balances, net worth display, modal entity creation, and form reset | Accepted | UI |
+| D-50 | GUI Reset behavior, GridBagLayout input expansion, category kind filtering, and selection retention | Accepted | UI |
 
 ## Entries
 
@@ -473,6 +474,21 @@ Total decisions: 47 (D-01 through D-47).
 - **Alternatives:** Multi-window MDI layout (rejected as overly complex); inline editable table for accounts (rejected to maintain MVP decoupling).
 - **Consequences / revisit when:** Supported by `AccountBalanceItem` record and unit tests in `MainPresenterTest` (17 tests green, total suite 400 tests).
 - **Traces to:** FR-01, FR-05, FR-07, FR-08, NFR-08, D-05, D-40, D-48.
+
+### D-50 GUI Reset Behavior, GridBagLayout Input Expansion, Category Kind Filtering, and Selection Retention
+- **Date / status:** 2026-11-16 / Accepted
+- **Decision:**
+  1. **Dual Reset Behavior:**
+     - In Search & Filter, `resetButton` clears `filterText`, resets account/category filter combos to index 0 ("All Accounts", "All Categories"), resets `sorter.setSortKeys(null)` so table sorting is cleared, clears `table.clearSelection()`, queries all transactions, and updates `statusLabel`.
+     - In Record Expense, `clearExpenseButton` ("Clear Form") clears Amount, Note, resets Date to today, resets `accountCombo` to default index 0, updates `availableBalanceLabel`, resets `categoryCombo` to `(None)`, and resets `budgetBadge` to `[NO BUDGET] Select category`.
+  2. **Form Layout Expansion:** Replace `GridLayout(7, 2, 4, 4)` in `buildExpenseForm()` with `GridBagLayout` where label column is tightly packed (~70px) and input column takes all remaining width ($\ge 210$px), expanding `accountCombo` from 101px to $\ge 190$px and eliminating component squeeze beside `[+ New]` button.
+  3. **Category Kind Filtering:** In `MainFrame.setCategories()`, only categories of kind `EXPENSE` (or composite branches containing them) are populated in the Record Expense `categoryCombo`. The Search & Filter combo continues to expose all categories across transaction kinds.
+  4. **Combo Selection Retention & Listener Safety:** A boolean flag `isUpdatingCombos` guards against premature listener cascades during `removeAllItems()` and `addItem()`. On reload, `setAccounts()` and `setCategories()` retain the previously selected account and category ID if still present in the updated list, preventing selection wipeout to index 0.
+  5. **Currency Glyph Fallback:** Avoid hardcoding Unicode Rupee glyph (`₹`) in static initial label strings (`netWorthLabel`), rendering formatted zero (`0.00`) directly to prevent font fallback rendering as `?` on systems lacking the glyph.
+- **Why:** Resolves GUI usability defects reported in Step A: table remaining sorted after filter reset, Clear Form leaving stale account selection, narrow 101px combo squeeze, display of income categories in expense form, and selection wipeout on modal account/category creation.
+- **Alternatives:** JSplitPane fixed minimums alone (insufficient inside GridLayout); custom cell renderer for font fallback (rejected as overly complex when layout and standard formatting resolve it cleanly).
+- **Consequences / revisit when:** Supported by 5 tests in `MainPresenterTest` (total 22 presenter tests; 405 test suite green; 0 Checkstyle violations). Revisit during SOLID refactor in Step B1.
+- **Traces to:** FR-01, FR-03, FR-05, FR-07, FR-08, NFR-04, NFR-08, D-05, D-40, D-48, D-49.
 
 ## Template for a new entry
 
